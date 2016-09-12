@@ -2,10 +2,14 @@
 
 This database will be managed by refarch-cloudnative-micro-inventory microservice.
 
+Initially, follow the steps here to deploy the inventory database to a container in IBM BlueMix:
+https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql
+
+This database will be located in the primary BlueMix region.  In this README a secondary BlueMix region is utilized as a disaster recovery site for the MySQL database.
 
 ### Set up VPN Service in two IBM Bluemix regions
 
-1. Create VPN service in one IBM Bluemix region, for example, US South.
+1. Create VPN service in the primary IBM Bluemix region, for example, US South.
 
 2. Under Manage, add a new Gateway Appliance.  Ensure that the destination consists of all single containers and all scalable groups.  Note the IP Address of the Gateway Appliance.
 
@@ -44,62 +48,6 @@ This database will be managed by refarch-cloudnative-micro-inventory microservic
 
 11.  Verify that both sides of the connection appear as "ACTIVE".
 
-### Setup Master Inventory Database in IBM Bluemix container in first IBM Bluemix region
-1. Clone git repository.
-    ```
-    # git clone https://github.com/ibm-cloud-architecture/refarch-cloudnative-resiliency.git
-    # cd refarch-cloudnative-resiliency/mysql
-    ```
-
-2. Build docker image using the Dockerfile from repo.
-    ```
-    # docker build -t cloudnative/mysql .
-    ```
-
-3. Log in to your Bluemix account.
-    ```
-    # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
-    ```
-
-4. Set target to use your Bluemix Org and Space.
-    ```
-    # cf target -o <your-bluemix-org> -s <your-bluemix-space>
-    ```
-
-5. Log in to IBM Containers plugin.
-    ```
-    # cf ic login
-    ```
-
-6. Tag and push mysql database server image to your Bluemix private registry namespace.  In this example we deploy the master to US South region (registry.ng.bluemix.net).
-    ```
-    # docker tag cloudnative/mysql registry.ng.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
-    # docker push registry.ng.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
-    ```
-
-7. Create MySQL container with database `inventorydb`.  This database can be connected at `<docker-host-ipaddr/hostname>:3306` as `dbuser` using `Pass4dbUs3R`.  Ensure that SERVER_ID is 1.
-    
-    _It is recommended to change the default passwords used here._
-    ```
-    # cf ic run -m 512 --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=Pass4Admin123 -e MYSQL_USER=dbuser -e MYSQL_PASSWORD=Pass4dbUs3R -e MYSQL_DATABASE=inventorydb -e SERVER_ID=1 registry.ng.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
-    ```
-
-8. Create `items` table and load sample data. You should see message _Data loaded to inventorydb.items._
-    ```
-    # cf ic exec -it mysql sh /root/scripts/load-data.sh
-    ```
-
-9. Verify, there should be 12 rows in the table.
-    ```
-    # cf ic exec -it mysql bash
-    # mysql -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE}
-    mysql> select * from items;
-    mysql> quit
-    # exit
-    ```
-   
-Master Inventory database is now setup in IBM Bluemix Container. 
-
 ### Setup Slave Inventory Database in IBM Bluemix container in second IBM Bluemix region
 1. Log in to your Bluemix account to the second bluemix endpoint.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
     ```
@@ -122,7 +70,7 @@ Master Inventory database is now setup in IBM Bluemix Container.
     # docker push registry.eu-gb.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
     ```
 
-5. Create MySQL container with database `inventorydb`.  This database can be connected at `<docker-host-ipaddr/hostname>:3306`.  The user will be replicated, so there is no need to create the user here.  Ensure that SERVER_ID is set to some unique number (not 1).
+5. Create MySQL container with database `inventorydb`.  This database can be connected at `<docker-host-ipaddr/hostname>:3306`.  The user will be replicated, so there is no need to create the user here.  Ensure that SERVER_ID is set to a number other than 1, as this is what the first MySQL server is set to.
     
     _It is recommended to change the default passwords used here._
     ```
@@ -149,7 +97,7 @@ Slave Inventory database is now setup in IBM Bluemix Container.
 
 4. Discover the hostname and IP address of the slave container using the following commands:
     ```
-    # cf ic exec mysql-slave hostname
+    # cf ic inspect -f '{{.Config.Hostname}}' mysql-slave
     # cf ic inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-slave
     ```
 
@@ -168,10 +116,12 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic login
     ```
 
-8. Run the following script to allow the replication user to replicate data from the slave container
+8. Run the following script to allow the replication user to replicate data from the slave container.  This generates a user named `repl` that is authorized to replicate the database.
     ```
-    # cf ic exec mysql sh /root/scripts/add_repl_slave.sh <slave-hostname> <slave-ip>
+    # cf ic exec mysql sh /root/scripts/add_repl_slave.sh --slave-host=<slave-hostname> --slave-ip=<slave-ip>
     ```
+
+    Note the password that it generates for the slave.  If desired, you may generate your own password and pas it in using --repl-passwd=<password>
 
 ### Setup slave host replication on the slave Container
 1. Log in to your Bluemix account to the first bluemix endpoint.  For example, US South is https://api.ng.bluemix.net.
@@ -191,7 +141,7 @@ Slave Inventory database is now setup in IBM Bluemix Container.
 
 4. Discover the hostname and IP address of the master container using the following commands:
     ```
-    # cf ic exec mysql hostname
+    # cf ic inspect -f '{{.Config.Hostname}}' mysql 
     # cf ic inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql
     ```
 
@@ -210,9 +160,9 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic login
     ```
 
-8. Run the following script to allow the replication user to replicate data from the slave container
+8. Run the following script to allow the replication user `repl` to replicate data from the slave container.  Note the <repl password> is the same one passed to the slave container above.
     ```
-    # cf ic exec mysql-slave sh /root/scripts/add_repl_master.sh <master-hostname> <master-ip>
+    # cf ic exec mysql-slave sh /root/scripts/add_repl_master.sh --master-host=<master-hostname> --master-ip=<master-ip> --repl-passwd=<repl password>
     ```
 
 9. Use the following commands to verify that replication is successful.
