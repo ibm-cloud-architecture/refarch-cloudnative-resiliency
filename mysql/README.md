@@ -7,20 +7,20 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql
 
 This database will be located in the primary BlueMix region.  In this README a secondary BlueMix region is utilized as a disaster recovery site for the MySQL database.
 
-### Set up VPN Service in two IBM Bluemix regions
+### Set up VPN Service in two IBM BlueMix regions
 
-1. Create VPN service in the primary IBM Bluemix region, for example, US South.
+1. Create VPN service in the primary IBM BlueMix region, for example, US South.
 
 2. Under Manage, add a new Gateway Appliance.  Ensure that the destination consists of all single containers and all scalable groups.  Note the IP Address of the Gateway Appliance.
 
    If desired, the IKE and IPSec Policies can be updated, but the defaults should be fine.
 
-3. Using the CF CLI, login to the other IBM Bluemix region, for example, United Kingdom (https://api.eu-gb.bluemix.net).
+3. Using the CF CLI, login to the other IBM BlueMix region, for example, United Kingdom (https://api.eu-gb.bluemix.net).
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-4. Set target to use your Bluemix Org and Space.
+4. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -30,31 +30,41 @@ This database will be located in the primary BlueMix region.  In this README a s
     # cf ic login
     ```
 
-6. Remove the default container network and recreate it with a different subnet than the default 172.31.0.0/16 to avoid overlap with the subnet in the other bluemix region
+6. Remove the default container network and recreate it with a different subnet than the default 172.31.0.0/16 to avoid overlap with the container subnet in the primary BlueMix region.
     ```
     # cf ic network rm default
     # cf ic network create --name=default --subnet 172.32.0.0/16
     ```
 
-7. In the bluemix console, create the VPN Service for the second Bluemix region.
+7. In the BlueMix console, create the VPN Service for the secondary BlueMix region.
 
 8. Under Manage, add a new Gateway Appliance.  Ensure that the destination consists of all single containers and scalable groups, with the updated subnet 172.32.0.0/16.  Note the IP address of this gateway appliance.
 
-   If the IKE and IPSec policies were modified in step 2, ensure that they match in the second Bluemix region.
+   If the IKE and IPSec policies were modified in step 2, ensure that they match in the secondary BlueMix region.
 
-9. In the first Bluemix region, under VPN Service, Create a Connection for the gateway appliance.  Enter a preshared key string, and ensure that Customer Gateway IP is the IP address of the Gateway Appliance of the second Bluemix region.  Ensure the Customer Subnet is the subnet created in the secondary Bluemix Region (172.32.0.0/16).  Expand the Advanced Settings and ensure "Action on dead peer" is "restart" so this side of the connection re-initiates the connection when it detects the dead peer.  The remaining settings can be left as default.
+9. In the primary BlueMix region, under VPN Service, `Create a Connection` for the gateway appliance.  
+    - Enter a preshared key string, at least 8 characters.
+    - Ensure that Customer Gateway IP is the IP address of the Gateway Appliance of the secondary BlueMix region.  
+    - Ensure the Customer Subnet is the subnet created in the secondary BlueMix Region (e.g. 172.32.0.0/16).  
+    - Expand the Advanced Settings and ensure "Action on dead peer" is "restart" so this side of the connection re-initiates the connection when it detects the dead peer.  
+    - The remaining settings can be left as default.
 
-10. In the second Bluemix region, under VPN Service, Create a Connection for the gateway appliance.  Enter the same preshared key string as entered in the above step, and ensure the Customer Gateway IP is the IP address of the Gateway appliance in the first Bluemix region.  Ensure the Customer Subnet is the subnet of the first Bluemix region (172.31.0.0/16).  Expand the Advanced settings and ensure "Action on dead peer" is "restart-by-peer".  The remaining settings can be left as default.
+10. In the secondary BlueMix region, under VPN Service, `Create a Connection` for the gateway appliance.  
+    - Enter the same preshared key string as entered in the above step 
+    - Ensure the Customer Gateway IP is the IP address of the Gateway appliance in the primary BlueMix region.  
+    - Ensure the Customer Subnet is the container subnet of the primary BlueMix region (e.g. 172.31.0.0/16).  
+    - Expand the Advanced settings and ensure "Action on dead peer" is "restart-by-peer", so the secondary region waits for the primary region to restart the connection when it detects the dead peer.  
+    - The remaining settings can be left as default.
 
 11.  Verify that both sides of the connection appear as "ACTIVE".
 
-### Setup Slave Inventory Database in IBM Bluemix container in second IBM Bluemix region
-1. Log in to your Bluemix account to the second bluemix endpoint.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
+### Setup Slave Inventory Database in IBM BlueMix container in secondary IBM BlueMix region
+1. Log in to your BlueMix account to the secondary BlueMix region API endpoint.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-2. Set target to use your Bluemix Org and Space.
+2. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -64,28 +74,28 @@ This database will be located in the primary BlueMix region.  In this README a s
     # cf ic login
     ```
 
-4. Tag and push mysql database server image to your Bluemix private registry namespace.  In this example we deploy the slave to United Kingdom region (registry.eu-gb.bluemix.net).
+4. Tag and push mysql database server image to your BlueMix private registry namespace.  In this example we deploy the slave to United Kingdom region (registry.eu-gb.bluemix.net).
     ```
     # docker tag cloudnative/mysql registry.eu-gb.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
     # docker push registry.eu-gb.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
     ```
 
-5. Create MySQL container with database `inventorydb`.  This database can be connected at `<docker-host-ipaddr/hostname>:3306`.  The user will be replicated, so there is no need to create the user here.  Ensure that SERVER_ID is set to a number other than 1, as this is what the first MySQL server is set to.
+5. Create MySQL container with database `inventorydb`.  The database user will be replicated, so there is no need to create the user here.  Ensure that SERVER_ID is set to a number other than 1, as this is what the primary MySQL server is set to.
     
     _It is recommended to change the default passwords used here._
     ```
     # cf ic run -m 512 --name mysql-slave -p 3306:3306 -e MYSQL_ROOT_PASSWORD=Pass4Admin123 -e MYSQL_DATABASE=inventorydb -e SERVER_ID=2 registry.eu-gb.bluemix.net/$(cf ic namespace get)/mysql:cloudnative
     ```
 
-Slave Inventory database is now setup in IBM Bluemix Container. 
+Slave Inventory database is now setup in an IBM BlueMix Container in the secondary BlueMix region. 
 
 ### Setup slave host replication on the Master Container
-1. Log in to your Bluemix account to the second bluemix endpoint.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
+1. Log in to your BlueMix account to the secondary BlueMix API endpoint.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-2. Set target to use your Bluemix Org and Space.
+2. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -101,12 +111,12 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql-slave
     ```
 
-5. Log in to the Bluemix account to the first bluemix endpoint where the master container is.  For example, US South is https://api.ng.bluemix.net.
+5. Log in to the BlueMix account to the primary BlueMix region API endpoint where the master container is.  For example, US South is https://api.ng.bluemix.net.
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-6. Set target to use your Bluemix Org and Space.
+6. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -121,15 +131,15 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic exec mysql sh /root/scripts/add_repl_slave.sh --slave-host=<slave-hostname> --slave-ip=<slave-ip>
     ```
 
-    Note the password that it generates for the slave.  If desired, you may generate your own password and pas it in using --repl-passwd=<password>
+    Note the password that it generates for the slave.  If desired, you may generate your own password and pass it in using --repl-passwd=&lt;password&gt;
 
 ### Setup slave host replication on the slave Container
-1. Log in to your Bluemix account to the first bluemix endpoint.  For example, US South is https://api.ng.bluemix.net.
+1. Log in to your BlueMix account to the primary BlueMix region.  For example, US South is https://api.ng.bluemix.net.
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-2. Set target to use your Bluemix Org and Space.
+2. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -145,12 +155,12 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql
     ```
 
-5. Log in to the Bluemix account to the first bluemix endpoint where the slave container is.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
+5. Log in to the BlueMix account to the secondary BlueMix endpoint where the slave container is.  For example, United Kingdom is https://api.eu-gb.bluemix.net.
     ```
     # cf login -a <bluemix-api-endpoint> -u <your-bluemix-user-id>
     ```
 
-6. Set target to use your Bluemix Org and Space.
+6. Set target to use your BlueMix Org and Space.
     ```
     # cf target -o <your-bluemix-org> -s <your-bluemix-space>
     ```
@@ -160,7 +170,7 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # cf ic login
     ```
 
-8. Run the following script to allow the replication user `repl` to replicate data from the slave container.  Note the <repl password> is the same one passed to the slave container above.
+8. Run the following script to allow the replication user `repl` to replicate data from the slave container.  Note the &lt;repl password&gt; should be the same one passed to the slave container above.
     ```
     # cf ic exec mysql-slave sh /root/scripts/add_repl_master.sh --master-host=<master-hostname> --master-ip=<master-ip> --repl-passwd=<repl password>
     ```
@@ -182,4 +192,4 @@ Slave Inventory database is now setup in IBM Bluemix Container.
     # exit
     ```
 
-The inventory database is now replicated in a second BlueMix instance.
+The inventory database is now replicated to the slave container running in the secondary BlueMix region.
