@@ -174,6 +174,8 @@ elif [ "${NODE_TYPE}" == "data" ]; then
 
             docker stop mysql-cluster-datanode${_count}
             docker rm mysql-cluster-datanode${_count}
+
+            docker run -d --net mynet --ip ${DATA_NODE_IP} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-cluster-datanode${_count} mysql-cluster ndbd
         fi
         _count=$((_count+1))
     done
