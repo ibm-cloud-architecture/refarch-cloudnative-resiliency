@@ -66,7 +66,7 @@ fi
 
 if [ "${NODE_TYPE}" != "mgmt" -a \
      "${NODE_TYPE}" != "sql" -a \
-     "${NODE_TYPE}" != "data" -a ]; then
+     "${NODE_TYPE}" != "data" ]; then
     echo "Invalid NODE_TYPE set: ${NODE_TYPE}"
     print_usage
     exit 1
