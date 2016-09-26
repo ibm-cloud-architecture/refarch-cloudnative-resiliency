@@ -1,4 +1,4 @@
-# Making a Digital Applicaitons using a Microservice Architecture Resilient
+# Making Microservices Resilient
 
 ## Introduction
 
