@@ -4,7 +4,7 @@
 
 This is a repository contains instructions for making the [reference applicaiotn] (https://github.com/ibm-cloud-architecture/refarch-cloudnative) Resilient.  It will cover topics on making this implementation Highly Available, able to failover, and how to handle disaster recovery.  
 
-- [refarch-cloudnative](https://github.com/ibm-cloud-architecture/refarch-cloudnative)  - The root repository (Current repository)
+- [refarch-cloudnative](https://github.com/ibm-cloud-architecture/refarch-cloudnative)  - Repository Reference Application
 
 
 
