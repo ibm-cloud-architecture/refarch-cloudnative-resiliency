@@ -68,12 +68,19 @@ if [ "${NODE_TYPE}" != "mgmt" -a \
     exit 1
 fi
 
+# get dependency scripts from mysql repo
+if [ ! -d "./refarch-cloudnative-mysql" ]; then
+    git clone https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql.git
+fi
+
+# build network
 docker network inspect mynet
 _rc=$?
 if [ ${_rc} -ne 0 ]; then
     docker network create -d overlay --subnet=${MY_SUBNET} mynet
 fi
 
+# build docker image
 docker build -t mysql-cluster .
 
 # the IPs will be set up like this, mgmtnode is mynet+2, 

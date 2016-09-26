@@ -32,6 +32,9 @@ RUN ln -s /usr/local/mysql/bin/mysqld /usr/local/bin/mysqld
 RUN ln -s /usr/local/mysql/bin/mysql /usr/local/bin/mysql
 RUN ln -s /usr/local/mysql/bin/mysql_config_editor /usr/local/bin/mysql_config_editor
 
+COPY refarch-cloudnative-mysql/scripts/load-data.sh /usr/local/bin/load-data.sh
+RUN chmod u+x /usr/local/bin/load-data.sh
+
 WORKDIR /usr/local/bin
 
 VOLUME /var/lib/mysql
