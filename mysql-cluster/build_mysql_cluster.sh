@@ -1,10 +1,6 @@
 #!/bin/bash
 
-
-MY_SUBNET="172.20.0.0/16"
-num_mgmt_nodes=1
-num_sql_nodes=2
-num_data_nodes=3
+. ./env.sh
 
 NODE_TYPE=$1
 NODE_IDX=$2
@@ -127,13 +123,25 @@ for DATA_NODE_IP in `echo ${DATA_NODE_IPS} | sed -e 's/;/ /g'`; do
 done
 
 cat > my.cnf <<ENDMYCNF
+[client]
+port=3306
+socket=/var/lib/mysql/mysql.sock
+
 [mysqld]
+port=3306
 datadir=/var/lib/mysql
 socket=/var/lib/mysql/mysql.sock
 user=mysql
 # Disabling symbolic-links is recommended to prevent assorted security risks
 symbolic-links=0
 ndbcluster=1
+
+log-bin
+binlog-format=row
+server-id=${NODE_IDX}${SITE_MASK}
+auto-increment-increment = 2
+auto-increment-offset = $((SITE_MASK+1))
+replicate-same-server-id = 0
 
 [mysql_cluster]
 ndb-connectstring=${MGMT_NODE_IP}
@@ -145,11 +153,11 @@ ENDMYCNF
 
 if [ "${NODE_TYPE}" == "mgmt" ]; then
     # stop and delete any mgmt nodes
-    docker stop mysql-cluster-mgmtnode${NODE_IDX}
-    docker rm mysql-cluster-mgmtnode${NODE_IDX}
+    docker stop mysql-${SITE_NAME}-mgmtnode${NODE_IDX}
+    docker rm mysql-${SITE_NAME}-mgmtnode${NODE_IDX}
 
     # start mgmt node
-    docker run -d --net mynet --ip ${MGMT_NODE_IP} -v `pwd`/config.ini:/etc/mysql-cluster.ini --name mysql-cluster-mgmtnode${NODE_IDX} mysql-cluster ndb_mgmd
+    docker run -d --net mynet --ip ${MGMT_NODE_IP} -v `pwd`/config.ini:/etc/mysql-cluster.ini --name mysql-${SITE_NAME}-mgmtnode${NODE_IDX} mysql-cluster ndb_mgmd
     
 elif [ "${NODE_TYPE}" == "sql" ]; then
     # stop and delete any sql nodes
@@ -157,10 +165,11 @@ elif [ "${NODE_TYPE}" == "sql" ]; then
     for SQL_NODE_IP  in `echo ${SQL_NODE_IPS} | sed -e 's/;/ /g'`; do
         if [ ! -z "${NODE_IDX}" -a \
              "${NODE_IDX}" == "${_count}" ]; then
-            docker stop mysql-cluster-sqlnode${_count}
-            docker rm mysql-cluster-sqlnode${_count}
+            docker stop mysql-${SITE_NAME}-sqlnode${_count}
+            docker rm mysql-${SITE_NAME}-sqlnode${_count}
 
-            docker run -d --net mynet --ip ${SQL_NODE_IP} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-cluster-sqlnode${_count} mysql-cluster mysqld
+            node_ip=`hostname -i`
+            docker run -d --net mynet -p ${node_ip}:3306:3306 --ip ${SQL_NODE_IP} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-sqlnode${_count} mysql-cluster mysqld
 
         fi
         _count=$((_count+1))
@@ -172,11 +181,13 @@ elif [ "${NODE_TYPE}" == "data" ]; then
         if [ ! -z "${NODE_IDX}" -a \
              "${NODE_IDX}" == "${_count}" ]; then
 
-            docker stop mysql-cluster-datanode${_count}
-            docker rm mysql-cluster-datanode${_count}
+            docker stop mysql-${SITE_NAME}-datanode${_count}
+            docker rm mysql-${SITE_NAME}-datanode${_count}
 
-            docker run -d --net mynet --ip ${DATA_NODE_IP} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-cluster-datanode${_count} mysql-cluster ndbd
+            docker run -d --net mynet --ip ${DATA_NODE_IP} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-datanode${_count} mysql-cluster ndbd
         fi
         _count=$((_count+1))
     done
 fi
+
+

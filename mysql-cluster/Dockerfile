@@ -9,6 +9,13 @@ RUN tar -C /usr/local -zxvf mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64.tar.g
 RUN rm -f /mysql-cluster*.tar.gz
 RUN ln -s /usr/local/mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64 /usr/local/mysql
 
+RUN curl https://bootstrap.pypa.io/get-pip.py | python2.6
+RUN echo "http://cdn.mysql.com//Downloads/MySQLGUITools/mysql-utilities-1.6.4.tar.gz" > /tmp/requirements.txt
+RUN echo "http://cdn.mysql.com//Downloads/Connector-Python/mysql-connector-python-2.1.3.tar.gz" >> /tmp/requirements.txt
+
+RUN pip install -r /tmp/requirements.txt
+RUN rm -f /tmp/requirements.txt
+
 RUN mkdir -p /usr/local/mysql/mysql-cluster
 
 RUN mkdir -p /var/lib/mysql-cluster
@@ -22,6 +29,8 @@ RUN ln -s /usr/local/mysql/bin/ndb_mgmd /usr/local/bin/ndb_mgmd
 RUN ln -s /usr/local/mysql/bin/ndbd /usr/local/bin/ndbd 
 RUN ln -s /usr/local/mysql/bin/ndbmtd /usr/local/bin/ndbmtd 
 RUN ln -s /usr/local/mysql/bin/mysqld /usr/local/bin/mysqld 
+RUN ln -s /usr/local/mysql/bin/mysql /usr/local/bin/mysql
+RUN ln -s /usr/local/mysql/bin/mysql_config_editor /usr/local/bin/mysql_config_editor
 
 WORKDIR /usr/local/bin
 
