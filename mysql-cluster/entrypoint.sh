@@ -20,6 +20,6 @@ sleep 10
 
 if [ "$1" == "mysqld" ]; then
     # distribute the privileges
-    mysql < /usr/local/mysql/share/ndb_dist_priv.sql
-    mysql -e 'CALL mysq.mysql_cluster_move_privileges();'
+    mysql -e 'source /usr/local/mysql/share/ndb_dist_priv.sql'
+    mysql -e 'CALL mysql.mysql_cluster_move_privileges();'
 fi

@@ -143,7 +143,7 @@ user=mysql
 symbolic-links=0
 ndbcluster=1
 
-log-bin
+log-bin=mysql-bin
 binlog-format=row
 server-id=${NODE_IDX}${SITE_MASK}
 auto-increment-increment = 2
