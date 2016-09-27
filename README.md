@@ -6,7 +6,7 @@ This is a repository contains instructions for making the [reference applicaiotn
 
 - [refarch-cloudnative](https://github.com/ibm-cloud-architecture/refarch-cloudnative)  - Repository Reference Application
 
-
+ ![Architecture](MicroserviceResilient.png?raw=true)
 
 ## Load Balancing Topics
 
