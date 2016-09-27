@@ -22,11 +22,11 @@ This section describes how to configure a Global Load Balancer for across 2 Blue
 
 
 
-### HA and Failover Built into the Bluemix Platform
+## HA and Failover Built into the Bluemix Platform
 
 
 
-#### Container Groups
+### Container Groups
 
 The Bluemix Platform has built in clustering for Containers.  
 
@@ -54,7 +54,7 @@ You can learn about [Container Groups here](https://new-console.ng.bluemix.net/d
 
 It is important that any container that needs to store data, should use volumes as described [here](https://new-console.ng.bluemix.net/docs/containers/container_volumes_ui.html).
 
-#### AutoScale  
+### AutoScale  
 
 For [our Node.JS based Cloud Foundry Applications](https://github.com/ibm-cloud-architecture/refarch-cloudnative-bff-inventory), we use AutoScaling built into the platform.   [Both Services](https://github.com/ibm-cloud-architecture/refarch-cloudnative-bff-socialreview) use this.  
 
