@@ -161,6 +161,8 @@ In the example application, the `items` table uses an auto-increment primary key
 
 In the example, we use SQL node 2 in dal09 to replicate from SQL node 1 in lon02, and SQL node 2 in lon02 to replicate from SQL node 1 in dal09.
 
+![MySQL Cluster Replication](./mysql-cluster-replication.png)
+
 ### Create replication user
 
 On the Master SQL nodes (SQL node 1 in both sites), create a user used for replication.
