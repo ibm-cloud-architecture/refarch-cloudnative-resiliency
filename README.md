@@ -12,7 +12,7 @@ Much of the guidance comes from this [article.](https://www.ibm.com/developerwor
 
 ## Adding Load Balancing into the Solution
 
-This section describes how to configure a Global Load Balancer for across 2 Bluemix Instances.  We will aim to provide several examples.  
+This section describes how to configure a Global Load Balancer across 2 Bluemix Instances.  We will aim to provide several examples.  
 
 
 ### Using nginx as a Global Load Balancer
@@ -69,7 +69,7 @@ For [our Node.JS based Cloud Foundry Applications](https://github.com/ibm-cloud-
 How you replicate databases across Cloud Instances is key to providing DR.  We have 2 examples for our reference implementation.  
 
 
-- [Replicaing MySQL](https://github.com/ibm-cloud-architecture/refarch-cloudnative-resiliency/tree/master/mysql)
+- [Replicating MySQL](https://github.com/ibm-cloud-architecture/refarch-cloudnative-resiliency/tree/master/mysql)
 
 
 - [Replicating with Cloudant](https://github.com/ibm-cloud-architecture/refarch-cloudnative-resiliency/tree/master/cloudant)
