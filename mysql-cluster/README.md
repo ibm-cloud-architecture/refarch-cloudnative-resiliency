@@ -56,6 +56,8 @@ This internal network is used for intra-cluster communications.  Only the SQL no
 
 Create the MySQL Cluster nodes in one of the sites using the following steps to build the docker image and construct the configuration for each of the cluster roles.  
 
+![MySQL Cluster](mysql-cluster.png)
+
 ### Define environment
 
 In `env.sh`, define the environment that the cluster will be created in.  For our example, `SITE_MASK` 0 is `dal09`, while `SITE_MASK` 1 is `lon02`.  Also, adjust the subnet if desired, and the number of SQL nodes and Data nodes as needed.
