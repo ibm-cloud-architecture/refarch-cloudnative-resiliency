@@ -1,6 +1,6 @@
 # MySQL Cluster 
 
-MySQL Cluster provides a scale-out highly available distributed database.  This repository provides a Docker image for quickly building a MySQL cluster.  By default, the cluster contains 1 management node, 2 SQL nodes, and 3 Data Nodes.  Our example constructs two standalone clusters in two different datacenters and sets up bi-directional replication for maximum availability of data across two regions.
+[MySQL Cluster](https://www.mysql.com/products/cluster/) provides a scale-out highly available distributed database.  This repository provides a Docker image for quickly building a MySQL cluster.  By default, the provisioned cluster contains 1 management node, 2 SQL nodes, and 3 Data Nodes.  Our example constructs two standalone clusters in two different datacenters and sets up bi-directional replication for maximum availability of data across two regions.
 
 ## VPN Setup
 
@@ -50,6 +50,8 @@ Then on the other Docker hosts:
 # docker network inspect mynet
 ```
 
+This internal network is used for intra-cluster communications.  Only the SQL nodes will have their ports published externally for applications to connect to.
+
 ## Cluster Creation
 
 Create the MySQL Cluster nodes in one of the sites using the following steps to build the docker image and construct the configuration for each of the cluster roles.  
@@ -67,6 +69,18 @@ SITE_NAME=dal09
 num_mgmt_nodes=1
 num_sql_nodes=2
 num_data_nodes=3
+```
+
+e.g., in the first site (dal09),
+```
+SITE_MASK=0
+SITE_NAME="dal09"
+```
+
+the second site (lon02),
+```
+SITE_MASK=1
+SITE_NAME="lon02"
 ```
 
 ### Build management node
@@ -87,7 +101,7 @@ The data node stores replica(s) of data.  The data node requires a management no
 
 ### Build SQL nodes
 
-The SQL nodes (or also called API nodes), serve up the data stored in the data nodes.  In MySQL Cluster, these nodes run the mysqld daemon which applications can connect to using the traditional MySQL JDBC driver.  Since there are two SQL nodes in our example, the application can connect to either of the SQL nodes for high availability.  The MySQL nodes publish port 3306 externally and so they are distributed one per docker host.
+The SQL nodes (also called API nodes), serve up the data stored in the data nodes.  In MySQL Cluster, these nodes run the mysqld daemon which applications can connect to using the traditional MySQL JDBC driver.  Since there are two SQL nodes in our example, the application can connect to either of the SQL nodes for high availability.  The MySQL nodes publish port 3306 externally and so they are distributed one per docker host.
 
 ```
 # ./build_mysql_cluster sql <1|2>
@@ -95,7 +109,7 @@ The SQL nodes (or also called API nodes), serve up the data stored in the data n
 
 #### Distributed privileges
 
-By default, when MySQL nodes start up, they execute the SQL script in `/usr/local/mysql/share/ndb_dist_priv.sql` and the stored procedure `mysql.mysql_cluster_move_privileges()` so that the mysql user tables are stored in the data nodes instead of locally in each of the sql nodes.
+In the provided Docker image, SQL nodes will execute the SQL script in `/usr/local/mysql/share/ndb_dist_priv.sql` and the stored procedure `mysql.mysql_cluster_move_privileges()` so that the MySQL user tables are stored in the data nodes instead of locally in each of the SQL nodes.  This means that a user created on one SQL node will be able to connect to any of the SQL nodes.
 
 Once the SQL node(s) come up, use the following commands on *one* of the SQL nodes to create a user that can connect to the database.
 
@@ -122,6 +136,20 @@ Follow the instructions at https://github.com/ibm-cloud-architecture/refarch-clo
 ```
 "spring.datasource.url=jdbc:mysql://<sql node 1 ip>:3306,<sql node 2 ip>:3306/inventorydb"
 ```
+
+#### Test insert and query from application
+
+Use the following curl command to insert data into the database via the inventory microservices REST API:
+
+```
+# echo '{ "name":"jkwong item 1","description":"jkwong item 1", "price": 100.0, "img": "item.jpg", "img_alt": "hotdog" }'  | curl -X POST  -H "Content-type: application/json" -d@- https://<app-url>/micro/inventory
+```
+
+Use the following command to read the data from the REST API:
+```
+# curl https://<app-url>/micro/inventory
+```
+
 
 ## MySQL Cluster Replication Setup
 
