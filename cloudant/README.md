@@ -12,7 +12,7 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-socialreview
 
 1. Login to BlueMix in a secondary region.  For example, if the primary region is US South, use United Kingdom as a backup region.  Use the following link to create an instance in United Kingdom:
 
-https://new-console.eu-gb.bluemix.net/catalog/services/cloudant-nosql-db
+   https://new-console.eu-gb.bluemix.net/catalog/services/cloudant-nosql-db
 
 2. Once created, launch the Cloudant dashboard in the secondary region, and create a database `socialreviewdb` that matches the database in the primary region.
 
@@ -31,8 +31,8 @@ https://new-console.eu-gb.bluemix.net/catalog/services/cloudant-nosql-db
 
 5. Start the social review microservice and attempt to write some data to Cloudant using the following cURL command to the microservice:
 
-```
-echo '{"comment":"Nice Product","itemId":13402,"rating":5,"review_email":"gangchen@us.ibm.com","reviewer_name":"Gang Chen","review_date":"06/08/2016"}' | curl -H "Content-type: application/json" -X POST -d@- http://<URL>/micro/review
+   ```
+   echo '{"comment":"Nice Product","itemId":13402,"rating":5,"review_email":"gangchen@us.ibm.com","reviewer_name":"Gang Chen","review_date":"06/08/2016"}' | curl -H "Content-type: application/json" -X POST -d@- http://<URL>/micro/review
 ```
 
 6. In the secondary BlueMix region, verify that the review document was replicated to this region with the same id.
