@@ -42,7 +42,7 @@ More information about mechanism available in Bluemix for HA are available at th
 
 For what concerns DR, we designed BlueCompute to provide __Active/Active__ capabilities because this is the most typical scenario for modern applications to which we demand 99.999% availability and extraordinary  levels of scalability.
 
-The Diagram below shows the DR topology for BlueCompute solution in Bluemix.  
+The Diagram below shows the DR topology for BlueCompute solution in Bluemix. ***Please Note: the Diagram applies only to Bluemix Dedicated. In Bluemix public cross-site replication for APIC is not available. In the solution we are describing for Bluemix Public only APIC Gateway is behind the load balancer, while API Manager and API Developer Portal must be accessed directly***  
 
  ![Architecture](DR-Active-Active.png?raw=true)
 
@@ -68,7 +68,6 @@ The main steps are the following:
   * Note down the IP address of BlueCompute NGINX Docker container
   * Optionally define a DNS for BlueCompute NGINX
 
-4. Align APIC settings across sites
-5. Configure BlueCompute Web Application and Mobile Application to point to the Load Balancer in front of the two APIC instances.
-6. Test availability of the app. Test should include the bringing offline APIC service in one location.
-  
+4. __Align APIC settings across sites__
+5. __Configure BlueCompute Web Application and Mobile Application__  to point to the Load Balancer in front of the two APIC instances.
+6. __Test availability of the app__  Test should include the bringing offline APIC service in one location.
