@@ -52,6 +52,55 @@ Use the social reviews microservice to verify that the new document is replicate
 curl http://<URL>:8080/micro/review
 ```
 
+### Set up Cloudant replication using the supplied scripts with the Cloud Foundry CLI and Cloudant REST API
+
+Use the supplied scripts to set up Cloudant replication using the Cloudant REST API.
+
+1. Log into one of the BlueMix regions using CLI.  For example, to log in to United Kingdom region, use
+   ```
+   # cf login -a https://api.eu-gb.bluemix.net
+   ```
+   
+   The `cf api` command will give the output:
+   ```
+   # cf api
+   API endpoint: https://api.eu-gb.bluemix.net (API version: 2.54.0)
+   ```
+   
+2. Gather target Cloudant credentials.
+   Use the script to retrieve the Cloudant credentials from BlueMix and export it into the environment.  This uses the first credentials returned for Cloudant.  
+   ```
+   # source ./get_cloudant_creds.sh
+   cloudant_host_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com
+   cloudant_username_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix
+   cloudant_password_target=7a5c40125d984d86bcf90cc09a2ba0b71d41ec09f0f64676ab14328293339e87
+   ```
+   
+   This exports the Cloudant coordinates into environment variables in the current shell.
+
+3. Log in to the BlueMix source instance.  For example, to log in to US South, use the following:
+   ```
+   # cf login -a https://api.ng.bluemix.net
+   ```
+   
+   The following command should give the output of the API endpoint that the Cloud Foundry CLI is pointing at:
+   ```
+   #  cf api
+   API endpoint: https://api.ng.bluemix.net (API version: 2.54.0)
+   ```
+   
+4. Run the CLI to set up the bidirectional replication.  This command replicates the `socialreviewdb` from the source Cloudant instance to the target and creates the database `socialreviewdb` on the target Cloudant instance if it does not exist already.  It also sets up replication from the target Cloudant instance to the source Cloudant instance.
+   ```
+   # ./replicate_cloudant.sh  socialreviewdb
+   Replicating from cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb to xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb ...
+   {"ok":true,"_local_id":"ad50a742dc69238b700da4729abc3a4e+continuous+create_target"}
+   Replicating from xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb to cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb ...
+   {"ok":true,"_local_id":"beba67b459bb72a3c32eb3dd31c30ee1+continuous"}
+   ```
+   
+   The two Cloudant instances should now be replicated in both directions.
+    
+
 ### Disaster recovery scenarios
 
 In the case replication gets out of sync (either primary, or secondary), the `Errors` tab in the Cloudant dashboard will have some messages.  This may happen if either the primary or the secondary site becomes unavailable.
