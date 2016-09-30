@@ -7,8 +7,59 @@ Configure Cloudant replication in a second BlueMix region for disaster recovery.
 Follow the steps to install and configure the Social Reviews microservice in the primary BlueMix Region:
 https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-socialreview
 
+### Set up Cloudant replication using the supplied scripts with the Cloud Foundry CLI and Cloudant REST API
 
-### Set up Cloudant Replication to a Secondary BlueMix Region
+Use the supplied scripts to set up Cloudant replication using the Cloudant REST API.  This assumes that there are already two BlueMix spaces in two different regions.  If following the Social Review microservice steps, one instance should already be created.
+
+1. Login to BlueMix in a secondary region.  For example, if the primary region is US South, use United Kingdom as a backup region.  Use the following link to create an instance in United Kingdom:
+
+   https://new-console.eu-gb.bluemix.net/catalog/services/cloudant-nosql-db
+
+2. Log into one of the BlueMix regions using CLI.  For example, to log in to United Kingdom region, use
+   ```
+   # cf login -a https://api.eu-gb.bluemix.net
+   ```
+   
+   The `cf api` command will give the output:
+   ```
+   # cf api
+   API endpoint: https://api.eu-gb.bluemix.net (API version: 2.54.0)
+   ```
+   
+3. Source the script to retrieve the Cloudant credentials from BlueMix and export it into the current environment.  This uses the first service credentials returned by the Cloud Foundry CLI for Cloudant.  
+   ```
+   # source ./get_cloudant_creds.sh
+   cloudant_host_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com
+   cloudant_username_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix
+   cloudant_password_target=7a5c40125d984d86bcf90cc09a2ba0b71d41ec09f0f64676ab14328293339e87
+   ```
+
+4. Log in to the BlueMix source instance.  For example, to log in to US South, use the following:
+   ```
+   # cf login -a https://api.ng.bluemix.net
+   ```
+   
+   The following command should give the output of the API endpoint that the Cloud Foundry CLI is pointing at:
+   ```
+   #  cf api
+   API endpoint: https://api.ng.bluemix.net (API version: 2.54.0)
+   ```
+   
+5. Run the CLI to set up the bidirectional replication.  This command replicates the `socialreviewdb` from the source Cloudant instance to the target and creates the database `socialreviewdb` on the target Cloudant instance if it does not exist already.  It also sets up replication from the target Cloudant instance to the source Cloudant instance.
+   ```
+   # ./replicate_cloudant.sh  socialreviewdb
+   Replicating from cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb to xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb ...
+   {"ok":true,"_local_id":"ad50a742dc69238b700da4729abc3a4e+continuous+create_target"}
+   Replicating from xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb to cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb ...
+   {"ok":true,"_local_id":"beba67b459bb72a3c32eb3dd31c30ee1+continuous"}
+   ```
+   
+   The two Cloudant instances should now be replicated in both directions.
+    
+
+### Set up Cloudant Replication to a Secondary BlueMix Region Using BlueMix portal
+
+These steps are a duplicate of the above scripts, but using the BlueMix and Cloudant management consoles.
 
 1. Login to BlueMix in a secondary region.  For example, if the primary region is US South, use United Kingdom as a backup region.  Use the following link to create an instance in United Kingdom:
 
@@ -17,7 +68,6 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-socialreview
 2. Once created, launch the Cloudant dashboard in the secondary region, and create a database `socialreviewdb` that matches the database in the primary region.
 
 3. In the BlueMix Dashboard in the secondary region, open the Cloudant service and view the Service Credentials.  In particular, copy the what appears in the `url` field.
-
 
 4. In the primary BlueMix region, open the service page for the Cloudant service
   - Under `Service Credentials`, copy the `password` field.
@@ -29,17 +79,9 @@ https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-socialreview
   - Check the box to "Make this replication continuous".  
   - Click on `Replicate Data` to begin the initial replication.  It will ask for the password, enter the password copied from the primary BlueMix region.
 
-5. Start the social review microservice and attempt to write some data to Cloudant using the following cURL command to the microservice:
+6. Repeat the reverse to set up replication from the secondary BlueMix region to the primary BlueMix region.
 
-   ```
-   echo '{"comment":"Nice Product","itemId":13402,"rating":5,"review_email":"gangchen@us.ibm.com","reviewer_name":"Gang Chen","review_date":"06/08/2016"}' | curl -H "Content-type: application/json" -X POST -d@- http://<URL>/micro/review
-```
-
-6. In the secondary BlueMix region, verify that the review document was replicated to this region with the same id.
-
-### Set up two-way Cloudant Replication 
-
-Repeat the reverse to set up replication from the secondary BlueMix region to the primary BlueMix region.
+### Verify replication using the Social Review Microservice
 
 Use the Cloudant API against the secondary BlueMix region to validate that the replication is happening correctly:
 ```
@@ -52,54 +94,7 @@ Use the social reviews microservice to verify that the new document is replicate
 curl http://<URL>:8080/micro/review
 ```
 
-### Set up Cloudant replication using the supplied scripts with the Cloud Foundry CLI and Cloudant REST API
 
-Use the supplied scripts to set up Cloudant replication using the Cloudant REST API.
-
-1. Log into one of the BlueMix regions using CLI.  For example, to log in to United Kingdom region, use
-   ```
-   # cf login -a https://api.eu-gb.bluemix.net
-   ```
-   
-   The `cf api` command will give the output:
-   ```
-   # cf api
-   API endpoint: https://api.eu-gb.bluemix.net (API version: 2.54.0)
-   ```
-   
-2. Gather target Cloudant credentials.
-   Use the script to retrieve the Cloudant credentials from BlueMix and export it into the environment.  This uses the first credentials returned for Cloudant.  
-   ```
-   # source ./get_cloudant_creds.sh
-   cloudant_host_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com
-   cloudant_username_target=xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix
-   cloudant_password_target=7a5c40125d984d86bcf90cc09a2ba0b71d41ec09f0f64676ab14328293339e87
-   ```
-   
-   This exports the Cloudant coordinates into environment variables in the current shell.
-
-3. Log in to the BlueMix source instance.  For example, to log in to US South, use the following:
-   ```
-   # cf login -a https://api.ng.bluemix.net
-   ```
-   
-   The following command should give the output of the API endpoint that the Cloud Foundry CLI is pointing at:
-   ```
-   #  cf api
-   API endpoint: https://api.ng.bluemix.net (API version: 2.54.0)
-   ```
-   
-4. Run the CLI to set up the bidirectional replication.  This command replicates the `socialreviewdb` from the source Cloudant instance to the target and creates the database `socialreviewdb` on the target Cloudant instance if it does not exist already.  It also sets up replication from the target Cloudant instance to the source Cloudant instance.
-   ```
-   # ./replicate_cloudant.sh  socialreviewdb
-   Replicating from cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb to xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb ...
-   {"ok":true,"_local_id":"ad50a742dc69238b700da4729abc3a4e+continuous+create_target"}
-   Replicating from xxxxxxxx-yyyy-zzzz-aaa-bbbbbbbbbbbb-bluemix.cloudant.com/socialreviewdb to cccccccc-dddd-eeee-ffff-gggggggggggg-bluemix.cloudant.com/socialreviewdb ...
-   {"ok":true,"_local_id":"beba67b459bb72a3c32eb3dd31c30ee1+continuous"}
-   ```
-   
-   The two Cloudant instances should now be replicated in both directions.
-    
 
 ### Disaster recovery scenarios
 
