@@ -2,6 +2,8 @@
 
 CMD="$@"
 
+mkdir -p /var/lib/mysql/data
+
 if [ "$1" == "mysqld" ]; then
 
     /usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/var/lib/mysql
