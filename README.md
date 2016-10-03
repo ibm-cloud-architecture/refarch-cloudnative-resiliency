@@ -61,6 +61,8 @@ The main steps are the following:
 2. __Configure Database Replication__  for both MySQL and Cloudant DB as the described in the documents available at the links below:
 
  * [Replicating MySQL](./mysql/README.md)
+ 
+ * [Replicating MySQL Cluster](./mysql-cluster/README.md)
 
  * [Replicating with Cloudant](./cloudant/README.md)
 
