@@ -18,7 +18,6 @@ RUN rm -f /tmp/requirements.txt
 
 RUN mkdir -p /usr/local/mysql/mysql-cluster
 
-RUN mkdir -p /var/lib/mysql-cluster
 RUN mkdir -p /var/lib/mysql/data
 
 COPY entrypoint.sh /usr/local/bin/

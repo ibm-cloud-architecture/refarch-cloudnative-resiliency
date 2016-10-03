@@ -113,7 +113,7 @@ IndexMemory=18M
 
 [ndb_mgmd]
 hostname=${MGMT_NODE_IP}
-datadir=/var/lib/mysql-cluster
+datadir=/var/lib/mysql
 
 ENDCONFIGINI
 
