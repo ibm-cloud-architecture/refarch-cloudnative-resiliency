@@ -1,6 +1,10 @@
 FROM centos:6
 
-RUN yum -y install wget tar perl perl-Data-Dumper libaio
+ARG NEW_RELIC_LICENSE_KEY 
+
+ENV NEW_RELIC_LICENSE_KEY ${NEW_RELIC_LICENSE_KEY}
+
+RUN yum -y install wget tar perl perl-Data-Dumper libaio sudo java
 RUN groupadd mysql
 RUN useradd -g mysql -s /bin/false mysql
 
@@ -15,6 +19,9 @@ RUN echo "http://cdn.mysql.com//Downloads/Connector-Python/mysql-connector-pytho
 
 RUN pip install -r /tmp/requirements.txt
 RUN rm -f /tmp/requirements.txt
+
+# install newrelic agent
+RUN UNATTENDED=true bash -c "$(curl -sSL https://download.newrelic.com/npi/release/install-npi-linux-debian-x64.sh)"
 
 RUN mkdir -p /usr/local/mysql/mysql-cluster
 

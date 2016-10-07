@@ -164,13 +164,17 @@ if [ ! -z "${VOL_MOUNT}" ]; then
     vol_mount_param="-v ${VOL_MOUNT}:/var/lib/mysql"
 fi
 
+if [ ! -z "${NEW_RELIC_LICENSE_KEY}" ]; then
+    new_relic_license_key_param="-e NEW_RELIC_LICENSE_KEY=${NEW_RELIC_LICENSE_KEY}"
+fi
+
 if [ "${NODE_TYPE}" == "mgmt" ]; then
     # stop and delete any mgmt nodes
     docker stop mysql-${SITE_NAME}-mgmtnode${NODE_IDX}
     docker rm mysql-${SITE_NAME}-mgmtnode${NODE_IDX}
 
     # start mgmt node
-    docker run -d --net mynet --ip ${MGMT_NODE_IP} ${vol_mount_param} -v `pwd`/config.ini:/etc/mysql-cluster.ini --name mysql-${SITE_NAME}-mgmtnode${NODE_IDX} mysql-cluster ndb_mgmd
+    docker run -d --hostname mysql-${SITE_NAME}-mgmtnode${NODE_IDX} --net mynet --ip ${MGMT_NODE_IP} ${vol_mount_param} -v `pwd`/config.ini:/etc/mysql-cluster.ini --name mysql-${SITE_NAME}-mgmtnode${NODE_IDX} mysql-cluster ndb_mgmd
     
 elif [ "${NODE_TYPE}" == "sql" ]; then
     # stop and delete any sql nodes
@@ -182,7 +186,7 @@ elif [ "${NODE_TYPE}" == "sql" ]; then
             docker rm mysql-${SITE_NAME}-sqlnode${_count}
 
             node_ip=`hostname -i`
-            docker run -d --net mynet -p ${node_ip}:3306:3306 --ip ${SQL_NODE_IP} ${vol_mount_param} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-sqlnode${_count} mysql-cluster mysqld
+            docker run -d --hostname mysql-${SITE_NAME}-sqlnode${_count} --net mynet -p ${node_ip}:3306:3306 ${new_relic_license_key_param} --ip ${SQL_NODE_IP} ${vol_mount_param} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-sqlnode${_count} mysql-cluster mysqld
 
         fi
         _count=$((_count+1))
@@ -197,7 +201,7 @@ elif [ "${NODE_TYPE}" == "data" ]; then
             docker stop mysql-${SITE_NAME}-datanode${_count}
             docker rm mysql-${SITE_NAME}-datanode${_count}
 
-            docker run -d --net mynet --ip ${DATA_NODE_IP} ${vol_mount_param} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-datanode${_count} mysql-cluster ndbd
+            docker run -d --hostname mysql-${SITE_NAME}-datanode${_count} --net mynet --ip ${DATA_NODE_IP} ${vol_mount_param} -v `pwd`/my.cnf:/etc/my.cnf --name mysql-${SITE_NAME}-datanode${_count} mysql-cluster ndbd
         fi
         _count=$((_count+1))
     done
