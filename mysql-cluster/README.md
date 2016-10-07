@@ -115,6 +115,16 @@ Then, mount the filesystem to a mountpoint:
 
 In the following script commands used to create nodes for each of the roles, you can optionally pass one of these directories so that data will be placed into these directories instead of in anonymous volumes.
 
+### New Relic Agent installation (optional)
+
+New Relic can be used to monitor the SQL nodes.  If a New Relic license key is available, it can be provided as an environment variable to the blow scripts as follows:
+
+```
+export NEW_RELIC_LICENSE_KEY=<license key>
+```
+
+If the above variable is in the environment during execution, the below scripts will capture the value and configure and start the New Relic Java Agent with the MySQL plugin as the SQL node containers are started.  Note that the MySQL plugin only supports monitoring InnoDB and not NDB so not all metrics regarding MySQL cluster are available.
+
 ### Build management node
 
 The management node serves as a coordinator for the other cluster nodes to exchange configuration in order to organize itself as a cluster.  Our example builds one management node by default.  Note that the management node is not required for normal cluster operations, but scaling up the number of other node types will require a functional management node.
