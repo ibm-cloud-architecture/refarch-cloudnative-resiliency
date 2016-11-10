@@ -1,0 +1,13 @@
+---
+- name: check if ndbd is running already
+  shell: ps aux | grep ndbd | grep -v grep
+  ignore_errors: yes
+  changed_when: false
+  register: ndbd_status
+
+
+- name: start ndbd
+  command: /usr/local/bin/ndbd 
+  async: 45
+  poll: 0
+  when: ndbd_status.rc != 0

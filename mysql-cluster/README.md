@@ -10,166 +10,28 @@ In this section you will establish a secure peer to peer IPsec tunnel between th
 
 See [VPN Instructions](../VPN.md) on how to proceed
 
-## Docker Setup
-
-The code requires that at least three docker hosts are provided to distribute the various containers on to.  In this example, a fourth Docker host is used to host a Consul keystore and an overlay network is created so that containers on different hosts can communicate on a private subnet.
-
-### Create a Consul keystore
-
-#### Install the Consul keystore in a Docker Container
-Consul is used as to store the state of containers on the overlay network.  The keystore publishes port 8500 which all other Docker hosts connect to.
-
-```
-# docker run -d -p 8500:8500 -h consul --name consul progrium/consul -server -bootstrap
-```
-
-#### Set up Docker daemon
-On all hosts used to run containers for MySQL cluster, update the docker daemon to connect to Consul.  On CentOS 7 hosts, this can be found in `/etc/sysconfig/docker`:
-
-```
-OPTIONS='--selinux-enabled --log-driver=journald -H tcp://0.0.0.0:2375 -H unix://var/run/docker.sock --cluster-store=consul://<console-host>:8500 --cluster-advertise=eth0:2375'
-```
-
-Once the configuration is modified, restart docker:
-
-```
-# systemctl restart docker
-```
-
-#### Create a Docker overlay network
-
-The included script will create the network `mynet` if it's missing, but it's worth trying to see if creating the network manually will result in the network distributed across all Docker hosts connected to Consul:
-
-Run the following on one of the Docker hosts:
-```
-# docker network create -d overlay --subnet=172.20.0.0/16 mynet
-```
-
-Then on the other Docker hosts:
-```
-# docker network inspect mynet
-```
-
-This internal network is used for intra-cluster communications.  Only the SQL nodes will have their ports published externally for applications to connect to.
-
-## Cluster Creation
+# Cluster Creation
 
 Create the MySQL Cluster nodes in one of the sites using the following steps to build the docker image and construct the configuration for each of the cluster roles.  
 
-![MySQL Cluster](mysql-cluster.png)
+![MySQL Cluster](./mysql-cluster.png)
 
-### Define environment
 
-In `env.sh`, define the environment that the cluster will be created in.  For our example, `SITE_MASK` 0 is `dal09`, while `SITE_MASK` 1 is `lon02`.  Also, adjust the subnet if desired, and the number of SQL nodes and Data nodes as needed.
+## Docker Setup
 
-```
-MY_SUBNET="172.20.0.0/16"
+See [Docker Instructions](docker/README.md) on how to proceed with creating a MySQL cluster setup in docker containers
 
-SITE_MASK=0
-SITE_NAME=dal09
+## Ansible Setup
 
-num_mgmt_nodes=1
-num_sql_nodes=2
-num_data_nodes=3
-```
-
-e.g., in the first site (dal09),
-```
-SITE_MASK=0
-SITE_NAME="dal09"
-```
-
-the second site (lon02),
-```
-SITE_MASK=1
-SITE_NAME="lon02"
-```
-
-### Create external volumes (optional)
-
-The /var/lib/mysql directory in the container is configured as a volume and can be mounted as an external directory inside of the container.  This allows the volume to backed up separately and the data to be persisted the next time the container starts up with that data mounted.
-
-In the reference architecture, since SoftLayer VMs are used to represent the on-premise resources, a second, third, and fourth SAN-provisioned disk are added to the VM.  These appear to the host operating system as `/dev/xvdc`, `/dev/xvdd`, and `/dev/xvde`.
-
-To prepare these disks, use parted to prepare the partitions:
-
-```
-# parted
-> select /dev/xvdc
-> mklabel msdos
-> mkpart primary ext4 0% 100%
-> quit
-```
-
-Then, use mkfs.ext4 to create the filesystem:
-
-```
-# mkfs.ext4 /dev/xvdc1
-```
-
-Then, mount the filesystem to a mountpoint:
-```
-# mkdir -p /mnt/xvdc1
-# mount /dev/xvdc1 /mnt/xvdc1
-```
-
-In the following script commands used to create nodes for each of the roles, you can optionally pass one of these directories so that data will be placed into these directories instead of in anonymous volumes.
-
-### New Relic Agent installation (optional)
-
-New Relic can be used to monitor the SQL nodes.  If a New Relic license key is available, it can be provided as an environment variable to the blow scripts as follows:
-
-```
-export NEW_RELIC_LICENSE_KEY=<license key>
-```
-
-If the above variable is in the environment during execution, the below scripts will capture the value and configure and start the New Relic Java Agent with the MySQL plugin as the SQL node containers are started.  Note that the MySQL plugin only supports monitoring InnoDB and not NDB so not all metrics regarding MySQL cluster are available.
-
-### Build management node
-
-The management node serves as a coordinator for the other cluster nodes to exchange configuration in order to organize itself as a cluster.  Our example builds one management node by default.  Note that the management node is not required for normal cluster operations, but scaling up the number of other node types will require a functional management node.
-
-```
-# ./build_mysql_cluster mgmt 1 [/mnt/xv<c|d|e>1]
-```
-
-### Build data nodes
-
-The data node stores replica(s) of data.  The data node requires a management node to be operational before it will start correctly.  By default, all of the data nodes will join node group 0, which is sufficient for our example as there is just one database and one table in the inventory microservice.  Our example has three data nodes and  three separate replicas, so the data nodes are distributed on on each of the docker hosts in our example.
-
-```
-# ./build_mysql_cluster data <1|2|3> [/mnt/xv<c|d|e>1]
-```
-
-### Build SQL nodes
-
-The SQL nodes (also called API nodes), serve up the data stored in the data nodes.  In MySQL Cluster, these nodes run the mysqld daemon which applications can connect to using the traditional MySQL JDBC driver.  Since there are two SQL nodes in our example, the application can connect to either of the SQL nodes for high availability.  The MySQL nodes publish port 3306 externally and so they are distributed one per docker host.
-
-```
-# ./build_mysql_cluster sql <1|2>  [/mnt/xv<c|d|e>1]
-```
-
-#### Distributed privileges
-
-In the provided Docker image, SQL nodes will execute the SQL script in `/usr/local/mysql/share/ndb_dist_priv.sql` and the stored procedure `mysql.mysql_cluster_move_privileges()` so that the MySQL user tables are stored in the data nodes instead of locally in each of the SQL nodes.  This means that a user created on one SQL node will be able to connect to any of the SQL nodes.
-
-Once the SQL node(s) come up, use the following commands on *one* of the SQL nodes to create a user that can connect to the database.
-
-*It is recommended to change the username and password specified here.*
-
-```
-# docker exec -it <sql_container_name> mysql -e 'create user 'dbuser'@'%' identified by 'password';
-# docker exec -it <sql_container_name> mysql -e 'grant all on *.* to user 'dbuser'@'%';
-# docker exec -it <sql_container_name> mysql mysql -e 'flush privileges;'
-```
+See [Ansible Instructions](ansible/README.md) on how to proceed with using [Ansible](https://www.ansible.com/) to create a MySQL cluster in SoftLayer VMs.
 
 #### Load Database Schema
 
-Once the SQL nodes are up, the database schema for the inventory microservice can be loaded, which reuses the script from https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql.  In one of the SQL nodes, execute the following commands, which creates the table, and then moves it onto the datanodes so it can be served by any of the SQL nodes.
+Once the SQL nodes are up, the database schema for the inventory microservice can be loaded, which reuses the script from [MySQL repository](https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql).  In one of the SQL nodes, execute the following commands, which creates the table, and then moves it onto the datanodes so it can be served by any of the SQL nodes.
 
 ```
-docker exec -it <sqlnode container name> /usr/local/bin/load-data.sh
-docker exec -it <sqlnode container name> mysql -e 'alter table inventorydb.items engine=ndbcluster;'
+# /usr/local/bin/load-data.sh
+# mysql -e 'alter table inventorydb.items engine=ndbcluster;'
 ```
 
 #### JDBC Connection from the Application
@@ -208,8 +70,8 @@ In the example, we use SQL node 2 in dal09 to replicate from SQL node 1 in lon02
 On the Master SQL nodes (SQL node 1 in both sites), create a user used for replication.
 
 ```
-# docker exec -it $sqlnode mysql -e "create user '<repl-user>'@'%' identified by '<repl-password>';"
-# docker exec -it $sqlnode mysql -e "grant replication slave on *.* to '<repl-user>'@'%';"
+# mysql -e "create user '<repl-user>'@'%' identified by '<repl-password>';"
+# mysql -e "grant replication slave on *.* to '<repl-user>'@'%';"
 ```
 
 ### Flush and lock tables
@@ -217,14 +79,14 @@ On the Master SQL nodes (SQL node 1 in both sites), create a user used for repli
 To prevent writes while configuring replication, flush all in-flight transactions and lock the tables for read only
 
 ```
-# docker exec -it $sqlnode mysql -e 'FLUSH TABLES WITH READ LOCK;'
+# mysql -e 'FLUSH TABLES WITH READ LOCK;'
 ```
 
 ### Retrieve Master Parameters for Replication
 
 Use the following command to show the binary log position on the master:
 ```
-# docker exec -it $sqlnode mysql -e 'show master status\G;'
+# mysql -e 'show master status\G;'
 ```
 
 The output looks similar to:
@@ -237,7 +99,7 @@ The output looks similar to:
 Executed_Gtid_Set:
 ```
 
-Use docker ps output to discover the IP that the slave should connect to for replication:
+If using docker, use the `docker ps` output to discover the IP that the slave should connect to for replication:
 ```
 # docker ps
 CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS              PORTS                           NAMES
@@ -251,27 +113,27 @@ ee903d825ed9        209fd4758142        "/usr/local/bin/entry"   22 hours ago   
 On the remote slave hosts (SQL node 2), configure the slave host to connect to the master and begin replication at the specified binary log position
 
 ```
-# docker exec -it $sqlnode mysql -e "stop slave;"
-# docker exec -it $sqlnode mysql -e "change master to master_host='<master ip>', master_port=<master_port>, master_user='<repl-user>, master_password='<repl-password>', master_log_file='<log file name>', master_log_pos=<log position>;"
-# docker exec -it $sqlnode mysql -e "start slave;"
+# mysql -e "stop slave;"
+# mysql -e "change master to master_host='<master ip>', master_port=<master_port>, master_user='<repl-user>, master_password='<repl-password>', master_log_file='<log file name>', master_log_pos=<log position>;"
+# mysql -e "start slave;"
 ```
 
 Check the slave status:
 ```
-# docker exec -it $sqlnode mysql -e "show slave status \G;"
+# mysql -e "show slave status \G;"
 ```
 
 ### Unlock tables on Remote Master
 Once the slave has caught up to the master, unlock the tables on the master host:
 ```
-# docker exec -it $sqlnode mysql -e "unlock tables;"
+# mysql -e "unlock tables;"
 ```
 
 ### View slave host status on the remote master
 
 ON REMOTE MASTER, see slaves:
 ```
-# docker exec -it $sqlnode mysql -e "show slave hosts\G;"
+# mysql -e "show slave hosts\G;"
 *************************** 1. row ***************************
  Server_id: 21
       Host: 

@@ -1,0 +1,29 @@
+---
+
+- name: install mysql-cluster binaries
+  hosts: all
+  remote_user: root
+
+  roles:
+    - common
+
+- name: install mgmt nodes
+  hosts: mgmtnodes
+  remote_user: root
+
+  roles: 
+    - mgmtnode
+
+- name: install data nodes
+  hosts: datanodes
+  remote_user: root
+
+  roles:
+    - datanode
+
+- name: install sql nodes
+  hosts: sqlnodes
+  remote_user: root
+
+  roles:
+    - sqlnode

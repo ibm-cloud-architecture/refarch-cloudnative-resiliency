@@ -1,0 +1,17 @@
+---
+
+- name: Create /etc/mysql-cluster.ini
+  template: src=templates/config.ini.j2 dest=/etc/mysql-cluster.ini
+
+- name: check if ndb_mgmd is running already
+  shell: ps aux | grep ndb_mgmd | grep -v grep
+  ignore_errors: yes
+  changed_when: false
+  register: ndb_mgmd_status
+
+
+- name: start ndb_mgmd
+  command: /usr/local/bin/ndb_mgmd -f /etc/mysql-cluster.ini 
+  async: 45
+  poll: 0
+  when: ndb_mgmd_status.rc != 0
