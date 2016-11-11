@@ -1,0 +1,65 @@
+---
+- name: Install packages
+  yum: name={{ item }} state=present
+  with_items:
+    - java-1.8.0-openjdk.x86_64
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+
+- name: check if /root/newrelic-npi exists
+  stat: path=/root/newrelic-npi
+  register: nrnpi_exists
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: download newrelic agent
+  shell: UNATTENDED=true bash -c "$(curl -sSL https://download.newrelic.com/npi/release/install-npi-linux-debian-x64.sh)"
+  when: (not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))) and (nrnpi_exists.stat.exists == false)
+  tags: newrelic
+
+- name: set new relic license key
+  shell: ./npi config set license_key {{ new_relic_license_key }} chdir=/root/newrelic-npi
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: install new relic mysql plugin
+  shell: ./npi install nrmysql --user=root --distro=redhat -n -y chdir=/root/newrelic-npi
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: set up newrelic agent config
+  template: src=templates/newrelic_mysql_plugin.json.j2 dest=/root/newrelic-npi/plugins/com.newrelic.plugins.mysql.instance/newrelic_mysql_plugin-2.0.0/config/plugin.json
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: create newrelic user
+  command: /usr/local/bin/mysql --protocol=socket -uroot -e "GRANT PROCESS,REPLICATION CLIENT ON *.* TO 'newrelic'@'localhost' IDENTIFIED BY 'newrelic';"
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+  
+- name: grant newrelic privilges
+  command: /usr/local/bin/mysql --protocol=socket -uroot -e "GRANT PROCESS,REPLICATION CLIENT ON *.* TO 'newrelic'@'127.0.0.1' IDENTIFIED BY 'newrelic';"
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+  
+- name: generate rest of config
+  shell: ./npi prepare nrmysql -n chdir=/root/newrelic-npi
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: check if plugin initscript is there
+  stat: path=/etc/init.d/newrelic_plugin_com.newrelic.plugins.mysql.instance follow=true
+  register: initscript_exists
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic
+
+- name: create plugin initscript
+  shell: ./npi add-service nrmysql --user=root --distro=redhat chdir=/root/newrelic-npi
+  when: (not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))) and (initscript_exists.stat.exists == False)
+  tags: newrelic
+  
+- name: start plugin
+  service: name=newrelic_plugin_com.newrelic.plugins.mysql.instance state=started
+  when: not ((new_relic_license_key is undefined) or (new_relic_license_key is none) or (new_relic_license_key | trim == ''))
+  tags: newrelic

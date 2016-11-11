@@ -1,0 +1,35 @@
+---
+
+- name: create my.cnf
+  template: src=templates/my.cnf.j2 dest=/etc/my.cnf
+
+- name: check if /var/lib/mysql/data exists
+  stat: path=/var/lib/mysql/data
+  register: data_stat
+
+- name: create mysql database
+  command: /usr/local/mysql/scripts/mysql_install_db --user=mysql --basedir=/usr/local/mysql --datadir=/var/lib/mysql
+  when: data_stat.stat.isdir is not defined
+
+- name: create and set permissions on /var/run/mysqld
+  file: path=/var/run/mysqld owner=mysql group=mysql state=directory
+
+- name: create mysql.server initscript
+  copy: src=/usr/local/mysql/support-files/mysql.server dest=/etc/rc.d/init.d remote_src=true
+
+- name: change initscript permissions
+  file: path=/etc/rc.d/init.d/mysql.server mode=0755
+
+- name: register mysql.server service
+  shell: chkconfig --add mysql.server
+
+- name: start mysqld
+  service: name=mysql.server state=started
+
+- name: create distributed privileges stored procedures
+  command: mysql -e 'source /usr/local/mysql/share/ndb_dist_priv.sql'
+
+- name: distribute privileges
+  command: mysql -e 'CALL mysql.mysql_cluster_move_privileges()'
+
+- include: newrelic.yml

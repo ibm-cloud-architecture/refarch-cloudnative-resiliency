@@ -1,0 +1,11 @@
+{
+  "agents": [
+    {
+      "name"    : "{{ ansible_hostname }}",
+      "host"    : "localhost",
+      "metrics" : "status,newrelic",
+      "user"    : "{{ new_relic_username }}",
+      "passwd"  : "{{ new_relic_password }}"
+    }
+  ]
+}

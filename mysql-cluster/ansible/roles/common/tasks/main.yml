@@ -1,0 +1,84 @@
+---
+
+- name: Install packages
+  yum: name={{ item }} state=present
+  with_items:
+    - wget
+    - tar
+    - perl
+#    - perl-Data-Dumper
+    - libaio
+    - libselinux-python
+
+- name: add group mysql
+  group: name=mysql
+
+- name: add user mysql
+  user: group=mysql name=mysql shell=/bin/false
+
+- name: check if /usr/local/mysql exists
+  stat: path=/usr/local/mysql
+  register: mysql_exists
+
+- name: wget mysql-cluster tarball
+  get_url:
+    url: http://cdn.mysql.com//Downloads/MySQL-Cluster-7.4/mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64.tar.gz
+    dest: /usr/local
+  when: mysql_exists.stat.islnk is not defined
+
+- name: untar mysql-cluster tarball
+  unarchive: src=/usr/local/mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64.tar.gz dest=/usr/local remote_src=yes
+  when: mysql_exists.stat.islnk is not defined
+
+- name: create /usr/local/mysql symlink
+  file: src=/usr/local/mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64 state=link dest=/usr/local/mysql
+
+- name: remove mysql-cluster tarball
+  file: path=/usr/local/mysql-cluster-gpl-7.4.12-linux-glibc2.5-x86_64.tar.gz state=absent
+  when: mysql_exists.stat.islnk is not defined
+
+- name: get pip for python2.6
+  get_url: url=https://bootstrap.pypa.io/get-pip.py dest=/tmp/get_pip.py
+
+- name: execute pip installer
+  shell: python2.6 /tmp/get_pip.py
+
+- name: add mysql-utilities to requirements.txt
+  lineinfile: 
+    create: yes 
+    state: present
+    dest: /tmp/requirements.txt 
+    line: http://cdn.mysql.com//Downloads/MySQLGUITools/mysql-utilities-1.6.4.tar.gz
+
+- name: add mysql-connector-python to requirements.txt
+  lineinfile: 
+    create: yes 
+    state: present
+    dest: /tmp/requirements.txt 
+    line: http://cdn.mysql.com//Downloads/Connector-Python/mysql-connector-python-2.1.3.tar.gz
+
+- name: pip install requirements
+  pip: requirements=/tmp/requirements.txt
+
+- name: remove /tmp/requirements.txt
+  file: path=/tmp/requirements.txt state=absent
+
+- name: create directories
+  file: path={{ item }} state=directory
+  with_items:
+  - /usr/local/mysql/mysql-cluster
+  - /var/lib/mysql-cluster
+  - /var/lib/mysql
+
+- name: create symlinks
+  file: src={{ item.src }} state=link dest={{ item.dest}}
+  with_items:
+     - { src: '/usr/local/mysql/bin/ndb_mgm', dest: '/usr/local/bin/ndb_mgm' }
+     - { src: '/usr/local/mysql/bin/ndb_mgmd', dest: '/usr/local/bin/ndb_mgmd' }
+     - { src: '/usr/local/mysql/bin/ndbd', dest: '/usr/local/bin/ndbd' }
+     - { src: '/usr/local/mysql/bin/ndbmtd', dest: '/usr/local/bin/ndbmtd' }
+     - { src: '/usr/local/mysql/bin/mysqld', dest: '/usr/local/bin/mysqld' }
+     - { src: '/usr/local/mysql/bin/mysqld_safe', dest: '/usr/local/bin/mysqld_safe' }
+     - { src: '/usr/local/mysql/bin/mysql', dest: '/usr/local/bin/mysql' }
+     - { src: '/usr/local/mysql/bin/mysql_config_editor', dest: '/usr/local/bin/mysql_config_editor' }
+  

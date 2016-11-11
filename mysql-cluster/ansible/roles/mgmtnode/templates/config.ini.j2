@@ -1,0 +1,21 @@
+[ndbd default]
+NoOfReplicas={{ groups['datanodes'] | length }}
+DataMemory=80M
+IndexMemory=18M
+
+[ndb_mgmd]
+hostname={{ ansible_default_ipv4.address }}
+datadir=/var/lib/mysql-cluster
+
+{% for sqlnode in groups['sqlnodes'] %}
+[mysqld]
+hostname={{ hostvars[sqlnode]['ansible_eth0']['ipv4']['address'] }}
+
+{% endfor %}
+
+{% for datanode in groups['datanodes'] %}
+[ndbd]
+hostname={{ hostvars[datanode]['ansible_eth0']['ipv4']['address'] }}
+datadir=/var/lib/mysql/data
+
+{% endfor %}
