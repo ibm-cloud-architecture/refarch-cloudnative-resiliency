@@ -31,3 +31,5 @@
 
 - name: distribute privileges
   command: mysql -e 'CALL mysql.mysql_cluster_move_privileges()'
+
+- include: newrelic.yml
