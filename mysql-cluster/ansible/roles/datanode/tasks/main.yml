@@ -1,4 +1,14 @@
 ---
+- name: create my.cnf
+  template: src=templates/my.cnf.j2 dest=/etc/my.cnf
+
+- name: create /var/lib/mysql/data
+  file: path={{ item }} state=directory
+  with_items:
+  - /var/lib/mysql/data
+
+
+
 - name: check if ndbd is running already
   shell: ps aux | grep ndbd | grep -v grep
   ignore_errors: yes

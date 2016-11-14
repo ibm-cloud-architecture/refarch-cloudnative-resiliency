@@ -1,0 +1,27 @@
+[client]
+port=3306
+socket=/var/lib/mysql/mysql.sock
+
+[mysqld]
+port=3306
+datadir=/var/lib/mysql
+socket=/var/lib/mysql/mysql.sock
+user=mysql
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+ndbcluster=1
+
+log-bin=mysql-bin
+binlog-format=row
+server-id={{ groups['datanodes'].index(inventory_hostname) | int + 1 }}{{ site_mask }}
+auto-increment-increment = 2
+auto-increment-offset = {{ site_mask | int + 1 }}
+replicate-same-server-id = 0
+
+[mysql_cluster]
+ndb-connectstring={{ hostvars[groups['mgmtnodes'][0]]['ansible_eth0']['ipv4']['address'] }}
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
