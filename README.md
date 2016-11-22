@@ -36,7 +36,7 @@ In case of global applications, it is possible to redirect users' transactions t
 ## Resiliency in BlueCompute
 BlueCompute sample application is designed to provide HA when running in a single location, in fact both Inventory and Social Review Microservices are hosted in Docker groups. IBM Container services provides a continous monitoring of those groups and in case of problems (or increased demand) it will take care of standing up new containers and of adding them to the group.
 
-Something similar happens with Inventory-BFF and Scovial-BFF services through BlueMix Autoscaling Service.
+Something similar happens with Inventory-BFF and Scovial-BFF services through Bluemix Autoscaling Service.
 
 More information about mechanism available in Bluemix for HA are available at this [link](BMX_HA.md)
 
@@ -44,7 +44,7 @@ For what concerns DR, we designed BlueCompute to provide __Active/Active__ capab
 
 The Diagram below shows the DR topology for BlueCompute solution in Bluemix.
 
-***Please Note: the Diagram applies only to Bluemix Dedicated. IBM API Connector doesn'tprovide cross-site replication. In this case the solution we are describing (Bluemix Public) only APIC Gateway is behind the load balancer, while API Manager and API Developer Portal are  accessed directly***  
+***Please Note: the Diagram applies only to Bluemix Dedicated. IBM API Connector doesn't provide cross-site replication. In this case the solution we are describing (Bluemix Public) only APIC Gateway is behind the load balancer, while API Manager and API Developer Portal are  accessed directly***  
 
  ![Architecture](DR-Active-Active.png?raw=true)
 
