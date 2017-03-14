@@ -1,32 +1,30 @@
 # Making Microservices Resilient
 
 ## Introduction
-This repository contains instructions and tools to improve availability and performances of the BlueCompute sample application available at the following [link](https://github.com/ibm-cloud-architecture/refarch-cloudnative)
+This repository contains instructions and tools to improve the availability and scalability of the BlueCompute sample application available at the following [link](https://github.com/ibm-cloud-architecture/refarch-cloudnative)
 
-It's recommended to complete the deployment of all components of BlueCompute application at least on one Bluemix region before going ahead with instructions reported in this document to setup a resilient environment.
+It's recommended to complete the deployment of all components of the BlueCompute application in at least one Bluemix region before going ahead with the instructions provided in this document to setup a resilient environment.
 
-If you are not interested on understanding aspects like Disaster Recovery or scalability at global level, you can ignore this project.
+If you are not interested on understanding aspects like Disaster Recovery or scalability at a global level, you can ignore this project.
 
 ## High Availability and Disaster Recovery
 When dealing with improved resilience it important to make some distinctions between High Availability (HA) and Disaster Recovery (DR).
 
-HA is mainly about keeping the service available to the end users when "ordinary" activities are performed on the system like deploying updates, rebooting the hosting Virtual Machines, applying security patches to the hosting OS, etc.  
+HA is mainly about keeping the service available to the end users when "ordinary" activities are performed on the system like deploying updates, rebooting the hosting Virtual Machines, applying security patches to the hosting OS, etc.  For our purposes, High Availability within a single site can be achieved by eliminating single points of failure.  The Blue Compute sample application in its current form implements high availability.
 
-HA usually doesn't deal with major unplanned (or planned) issues like complete site loss for instance due to major power outages, earthquakes, severe hardware failures, full-site connectivity loss, etc.   
+HA usually doesn't deal with major unplanned (or planned) issues such as complete site loss due to major power outages, earthquakes, severe hardware failures, full-site connectivity loss, etc.   In such cases, if the service must meet strict Service Level Objectives (SLO), you should make the whole application stack (infrastructure, services and application components) redundant by deploying it in at least two different Bluemix regions. This is typically defined as a DR Architecture.
 
-In such cases, if the availability of the service have strict Service Level Objective (SLO), you should make the whole application stack (infrastructure, services and application components) redundant by relying on at least two different Bluemix regions. This is typically defined as DR Architecture.
-
-There are many options to implement DR solutions, just for the sake of simplicity, we can group the different options in three major categories:
+There are many options to implement DR solutions.  For the sake of simplicity, we can group the different options in three major categories:
 
 * __Active/Passive__
 * __Active/Stand by__
 * __Active/Active__
 
-__Active/Passive__ is based on keeping the full application stack active in one location, while another application stack is deployed in a different location, but kept idle (or shut down). In case of prolongated unavailability of the primary site, the application stack is activated in the backup site. Usually that requires the restoring of backups taken in the primary site. This approach is not recommended when loosing data can be a problem (RPO less than few hours ) or when the availability of the service is critical (RTO less than few hours)
+__Active/Passive__ options are based on keeping the full application stack active in one location, while another application stack is deployed in a different location, but kept idle (or shut down). In the case of prolonged unavailability of the primary site, the application stack is activated in the backup site. Often that requires the restoring of backups taken in the primary site. This approach is not recommended when loosing data can be a problem (e.g. when the Recovery Point Objective (RPO) is less than a few hours ) or when the availability of the service is critical (e.g. when the Return to Operations (RTO) objective is less than a few hours).
 
-In the __Active/Stand by__ case the full application stack is active in both primary and backup location, however users transactions are served only by the primary site. The backup site takes care of keeping a replica of the status of the main location though data replication (like DB replication or disk replication). In case of prolongated unavailability of the primary site, all client transactions are routed to the backup site. This approach provides quite good RPO and RTO (minutes), however it is significantly more expensive that Active/Passive because of the double deployment (there is waste of resources because the Stand by assets can't be used to improve scalability and throughput)  
+In the __Active/Stand by__ case the full application stack is active in both primary and backup location, however users transactions are served only by the primary site. The backup site takes care of keeping a replica of the status of the main location though data replication (such as DB replication or disk replication). In case of prolonged unavailability of the primary site, all client transactions are routed to the backup site. This approach provides quite good RPO and RTO (generally measured in minutes), however it is significantly more expensive than the Active/Passive options because of the double deployment (e.g., resources are wasted because the Stand by assets can't be used to improve scalability and throughput).  
 
-In the __Active/Active__ case both locations are active and client transactions are distributed according to predefined policies (like round-robin, load balancing, location, etc. ) to both regions.  In case of failures of one site the other site will serve all clients. It's possible to achieve RPO and RTO close to zero with this configuration. The drawback is that both regions must be sized to handle the full load, even if they are used at the half of their capabilities when both locations are available. In such case Bluemix Autoscaling service can help in keeping always resources allocated according to the needs (as it happens with BlueCompute sample application).
+In the __Active/Active__ case both locations are active and client transactions are distributed according to predefined policies (such as round-robin, geographical load balancing, etc. ) to both regions.  In the case of failure of one site the other site must be able to serve all clients. It's possible to achieve both an RPO and RTO close to zero with this configuration. The drawback is that both regions must be sized to handle the full load, even if they are used at the half of their capabilities when both locations are available. In such cases the Bluemix Autoscaling service can help in keeping always resources allocated according to the needs (as happens with the BlueCompute sample application).
 
 ## Scalability and Performance considerations
 
