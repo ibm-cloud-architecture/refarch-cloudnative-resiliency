@@ -1,6 +1,6 @@
 # Connecting Bluemix VPN Service to Bluemix Infrastructure Vyatta Gateway
 
-In the examples shown here, the BlueMix VPN Service is used to connect the container network to Bluemix Infrastructure VMs that represent on-premise resources.  Follow these instructions to set up an IPSec tunnel between Bluemix and a Vyatta Gateway Appliance running in Bluemix Infrastructure.
+In the examples shown here, the Bluemix VPN Service is used to connect the container network to Bluemix Infrastructure VMs that represent on-premise resources.  Follow these instructions to set up an IPSec tunnel between Bluemix and a Vyatta Gateway Appliance running in Bluemix Infrastructure.
 
 
 #### Setup IBM VPN Service in Bluemix
