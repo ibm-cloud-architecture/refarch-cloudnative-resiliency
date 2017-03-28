@@ -5,16 +5,16 @@ This database will be managed by refarch-cloudnative-micro-inventory microservic
 The scripts here use the following git repo to provision docker containers on on-premise resources:
 https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql
 
-The docker containers are provisioned in a master-master replication across regions.  In this example, we deploy the inventory microservice from the BlueCompute reference application in two separate BlueMix regions, which are closest to the on-premise datacenters.   This example uses SoftLayer VMs in dal09 and lon02, with a Vyatta Gateway Appliance as a VPN endpoint.
+The docker containers are provisioned in a master-master replication across regions.  In this example, we deploy the inventory microservice from the BlueCompute reference application in two separate Bluemix regions, which are closest to the on-premise datacenters.   This example uses SoftLayer VMs in dal09 and lon02, with a Vyatta Gateway Appliance as a VPN endpoint.
 
-### Set up VPN Tunnel between BlueMix and On-Premise resources
+### Set up VPN Tunnel between Bluemix and On-Premise resources
 
 In this section you will establish a secure peer to peer IPsec tunnel between the IBM VPN Service in Bluemix and the Vyatta Gateway Appliance in SoftLayer.  This must be performed for each of the BlueMix regions hosting the BlueCompute application.
 
 See [VPN Instructions](../VPN.md) on how to proceed
 
 
-### Setup Inventory Database Master-Master replication in SoftLayer Datacenter(s)
+### Setup Inventory Database Master-Master replication in IBM Cloud Datacenter(s)
 
 1. Clone the repository
    ```
