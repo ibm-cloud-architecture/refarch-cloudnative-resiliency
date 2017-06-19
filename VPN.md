@@ -1,6 +1,6 @@
-# Connecting BlueMix VPN Service to SoftLayer Vyatta Gateway
+# Connecting Bluemix VPN Service to Bluemix Infrastructure Vyatta Gateway
 
-In the examples shown here, the BlueMix VPN Service is used to connect the container network to SoftLayer VMs that represent on-premise resources.  Follow these instructions to set up an IPSec tunnel between BlueMix and a Vyatta Gateway Appliance running in SoftLayer.
+In the examples shown here, the Bluemix VPN Service is used to connect the container network to Bluemix Infrastructure VMs that represent on-premise resources.  Follow these instructions to set up an IPSec tunnel between Bluemix and a Vyatta Gateway Appliance running in Bluemix Infrastructure.
 
 
 #### Setup IBM VPN Service in Bluemix
@@ -82,7 +82,7 @@ interface to route to the VLAN containing MySQL server.
    # save
    ```
 
-9. Go to SoftLayer portal, browse to Network > Gateway Appliances. Click on the Vyatta Gateway configured for this setup to launch the Details page.
+9. Go to Bluemix Infrastructure portal, browse to Network > Gateway Appliances. Click on the Vyatta Gateway configured for this setup to launch the Details page.
 
 10. Under the Associate a VLAN, select the VLAN Number saved from step-2 and click on Associate. The VLAN will be added to Associated VLANs.
 
