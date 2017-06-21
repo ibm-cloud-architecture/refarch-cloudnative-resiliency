@@ -20,9 +20,9 @@ There are many options to implement DR solutions.  For the sake of simplicity, w
   
   __Active/Passive__ options are based on keeping the full application stack active in one location, while another application stack is deployed in a different location, but kept idle (or shut down). In the case of prolonged unavailability of the primary site, the application stack is activated in the backup site. Often that requires the restoring of backups taken in the primary site. This approach is not recommended when loosing data can be a problem (e.g. when the Recovery Point Objective (RPO) is less than a few hours ) or when the availability of the service is critical (e.g. when the Return to Operations (RTO) objective is less than a few hours).
   
-* __Active/Stand by__
+* __Active/Standby__
 
-  In the __Active/Stand by__ case the full application stack is active in both primary and backup location, however users transactions are served only by the primary site. The backup site takes care of keeping a replica of the status of the main location though data replication (such as DB replication or disk replication). In case of prolonged unavailability of the primary site, all client transactions are routed to the backup site. This approach provides quite good RPO and RTO (generally measured in minutes), however it is significantly more expensive than the Active/Passive options because of the double deployment (e.g., resources are wasted because the Stand by assets can't be used to improve scalability and throughput).  
+  In the __Active/Standby__ case the full application stack is active in both primary and backup location, however users transactions are served only by the primary site. The backup site takes care of keeping a replica of the status of the main location though data replication (such as DB replication or disk replication). In case of prolonged unavailability of the primary site, all client transactions are routed to the backup site. This approach provides quite good RPO and RTO (generally measured in minutes), however it is significantly more expensive than the Active/Passive options because of the double deployment (e.g., resources are wasted because the Stand by assets can't be used to improve scalability and throughput).  
 
 * __Active/Active__
 
@@ -61,7 +61,7 @@ The main steps are the following:
 
 3. __Configure Load Balancer__ In order to have a reliable load balancing solution to route calls to each instance, we recommend the usage of commercial solutions like Akamai Global Traffic Management or Dyn for production environments. However for development (or Proof Of Concept) environments, it is also possible to use cheaper solutions like NGINX. Also with NGINX is possible to experiment Location-based routing as documented [here](http://jamesthom.as/blog/2015/09/11/location-based-cloud-foundry-applications-with-nginx-and-docker/). However, consider that in this case NGINX is a Single Point Of Failure (SPOF). In order to setup NGINX you have to:  
   * [Build NGINX Container](https://github.com/ibm-cloud-architecture/refarch-cloudnative-nginx)
-  * Start the container in IBM Bluemix container service
+  * Start the container in one of the Kubernetes clusters to load-balance between the two clusters
   * Note down the IP address of BlueCompute NGINX Docker container
   * Optionally define a DNS associated to the IP of BlueCompute NGINX (recommended)
 
