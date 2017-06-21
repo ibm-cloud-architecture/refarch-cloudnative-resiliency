@@ -1,0 +1,39 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{.Chart.Name}}-cleanup-jobs-{{.Release.Name}}"
+  labels:
+    app: bluecompute
+    micro: customer
+    tier: backend
+    heritage: {{.Release.Service | quote }}
+    release: {{.Release.Name | quote }}
+    chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    "helm.sh/hook": post-install,post-delete
+    "helm.sh/hook-weight": "39"
+spec:
+  template:
+    metadata:
+      name: "{{.Chart.Name}}-cleanup-jobs-{{.Release.Name}}"
+      labels:
+        heritage: {{.Release.Service | quote }}
+        release: {{.Release.Name | quote }}
+        chart: "{{.Chart.Name}}-{{.Chart.Version}}"
+        app: bluecompute
+        micro: customer
+        tier: backend
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: cleanup-jobs
+        image: ibmcase/kubectl:latest
+        imagePullPolicy: IfNotPresent
+        command: [ "/bin/bash", "-c" ]
+        args: 
+        - >
+            set -x;
+            kubectl delete jobs -l chart={{.Chart.Name}}-{{.Chart.Version}},release={{.Release.Name}} --cascade;
+

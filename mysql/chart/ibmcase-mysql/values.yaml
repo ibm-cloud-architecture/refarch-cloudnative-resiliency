@@ -1,0 +1,41 @@
+replicaCount: 1
+
+mysql:
+  server_id: 0
+  max_servers: 4
+  dbname: 
+  user: dbuser
+  password: Pass4dbus3r
+  service:
+    name: mysqldb
+    type: NodePort
+    externalPort: 3306
+    internalPort: 3306
+  binding:
+    name: binding-mysql
+  resources:
+    limits:
+      memory: 128Mi
+    requests:
+      memory: 64Mi
+  existingPVCName: 
+  backup:
+    enabled: false
+    objStoreSecretName: binding-jkwong-objstorage
+    backupName: patrocinio-inventory-mysql
+    backupType: incremental
+    scheduleType: periodic
+    scheduleInfo: daily
+
+image:
+  repository: ibmcase/mysql
+  tag: latest
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
