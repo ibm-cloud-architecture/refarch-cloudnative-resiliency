@@ -1,164 +1,84 @@
-###### refarch-cloudnative-resiliency
+# MySQL Replication
 
-This database will be managed by refarch-cloudnative-micro-inventory microservice.
+A MySQL database is used by both [Orders](https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-orders/tree/kube-int) and [Inventory](https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-inventory/tree/kube-int) microservices.
 
-The scripts here use the following git repo to provision docker containers on on-premise resources:
-https://github.com/ibm-cloud-architecture/refarch-cloudnative-mysql
+MySQL is provisioned using master-master replication across regions.  In this example, we deploy the microservice from the BlueCompute reference application in Kubernetes clusters in two separate Bluemix regions.  We also deploy the associated MySQL databases provisioned in containers with persistent volumes in Kubernetes clusters in each region, dal10 and ams03.
 
-The docker containers are provisioned in a master-master replication across regions.  In this example, we deploy the inventory microservice from the BlueCompute reference application in two separate Bluemix regions, which are closest to the on-premise datacenters.   This example uses SoftLayer VMs in dal09 and lon02, with a Vyatta Gateway Appliance as a VPN endpoint.
-
-### Set up VPN Tunnel between Bluemix and On-Premise resources
-
-In this section you will establish a secure peer to peer IPsec tunnel between the IBM VPN Service in Bluemix and the Vyatta Gateway Appliance in SoftLayer.  This must be performed for each of the BlueMix regions hosting the BlueCompute application.
-
-See [VPN Instructions](../VPN.md) on how to proceed
-
-
-### Setup Inventory Database Master-Master replication in IBM Cloud Datacenter(s)
+### Setup Database Master-Master replication in IBM Cloud Datacenter(s)
 
 1. Clone the repository
+
    ```
    # git clone https://github.com/ibm-cloud-architecture/refarch-cloudnative-resiliency
    ```
 
-2.  Update the environment 
+2. Change directory to the `mysql/chart` folder.
+
    ```
-   # cd mysql
+   # cd mysql/chart
+   ```
+
+3. Create a Persistent Volume Claim (PVC) for the MySQL data directory that the container will mount
+
+   ```
+   # kubectl create -f mysql-data.yaml
    ```
    
-   Update env.sh.  Make sure one site is `SITE_MASK=0` and one site is `SITE_MASK=1`.  you may want to also label the sites uniquely.  In our example, SITE 0 is `dal09` and SITE 1 is `lon02`
-
-   e.g.:
+   This creates a Persistent Volume on Bluemix Infrastructure that gets bound to your Kubernetes cluster.  It may take a few minutes for the volume to be provisioned and bound.  You can monitor the progress using:
+   
    ```
-   SITE_MASK=0
-   SITE="dal09"
+   # kubectl get pvc mysql-data
    ```
+   
+   Once it is complete, the status appears as `Bound`.
+
+3. Install the MySQL chart using Helm:
 
    ```
-   SITE_MASK=1
-   SITE="lon02"
+   # helm init
+   # helm install ibmcase-mysql \
+       --set mysql.service.type=<service type> \
+       --set mysql.dbname=<name of database to create> \
+       --set mysql.server_id=<server ID> \
+       --set mysql.existingPVCName=mysql-data
    ```
+   
+   Where:
+   - `<service_type>` is one of `NodePort` or `LoadBalancer`.
+     - `NodePort` exposes a high-port on the worker nodes that forwards traffic to port `3306` of the MySQL container
+     - `LoadBalancer` exposes the MySQL service using an external IP that clients (and replicas) can use to connect to the MySQL container over port 3306.
+   - `<server ID>` uniquely identifies the servers.  By default the chart supports up to 4 servers; specify `1`, `2`, `3`, or `4`.  In each region, ensure that the server ID is unique.
 
+   When the chart is installed, the Service resource will be printed to the console which contains either the LoadBalancer IP and/or the exposed NodePort.
+   
+4. On one replica (e.g. dal10), run the script to create a MySQL account that has `REPLICATION SLAVE` privileges used to synchronize the instance with a remote slave host.
 
-3. Ensure that each site resolves their hostname to the primary external IP that MySQL will be listening on.  The script uses the command `hostname -i` to determine this.  If not, add an entry to /etc/hosts so that the output of `hostname -i` contains the correct IP address.
-
-
-4. In site 1 (dal09), build a master:
    ```
-   ./rebuild_master.sh
-   ```
-
-   This creates a docker container and creates a credential for replication user.
-
-   At the end, the output appears:
-   ```
-   Add the following to the environment on a remote master:
-   export MASTER_IP=10.121.163.209 
-   export MASTER_PORT=3306
-   export MASTER_PASSWORD=a0nyp2w0cwMGqOku
-   export REPL_USERNAME=repl-dal09
-   export REPL_PASSWORD=Vl4O8EupAmZcbTIu
-
-   Use the following login path to log in to the local container:
-   export CONTAINER_NAME=mysql-master-dal09
-   export SELF_LOGIN_PATH=root_10-121-163-209_3306
-   ```
-
-   Cut and paste `export CONTAINER_NAME` and `export SELF_LOGIN_PATH` into current terminal (assuming bash)
-
-   Copy the export statements for `MASTER_IP`, `MASTER_PORT`, `MASTER_PASSWORD`, `REPL_USERNAME`, and `REPL_PASSWORD`
-
-5. In site 2 (lon02),
-   - paste the export statements for MASTER_IP, MASTER_PORT, MASTER_PASSWORD, REPL_USERNAME, and REPL_PASSWORD
-
-   - build a second master:
-      ```
-      ./rebuild_master.sh
-      ```
-
-     This builds a second docker container and create a credential for replication user.
-
-   Cut and paste the same two export statements to the current bash console, and copy and paste the `MASTER_*` and `REPL_*` export statements to the dal09 bash console
-
-
-6. In site 2 (lon02), generate the login-path for the site 1 master using the credentials from site 1 (dal09)
-   ```
-   # export MASTER_LOGIN_PATH=`./add_login.sh --container-name=${CONTAINER_NAME} --password=${MASTER_PASSWORD} --port=${MASTER_PORT} --host=${MASTER_IP} --user=root`
+   # kubectl exec \
+       $(kubectl get pods \
+         -l chart=ibmcase-mysql-0.1.0 \
+         -o go-template \
+         --template '{{ (index .items 0).metadata.name }}') -- \
+       /scripts/create_repl_user.sh \
+       --user=repl \
+       --password=replPassw0rd
    ```
 
-   The environment variable `MASTER_LOGIN_PATH` will contain the login-path for the site 2 master, e.g.:
-   ```
-   root_10-121-163-209_3306
-   ```
+	This example creates a user `repl` with password `replPassw0rd` that the remote slave uses to replicate itself.
 
-7. In site 1, generate the login-path for the site 2 master using the credentials from site 2:
-   ```
-   # export MASTER_LOGIN_PATH=`./add_login.sh --container-name=${CONTAINER_NAME} --password=${MASTER_PASSWORD} --port=${MASTER_PORT} --host=${MASTER_IP} --user=root`
-   ```
+5. On the other replica (e.g. ams03), run the script to set up the slave host for replication.  
 
-   The environment variable MASTER_LOGIN_PATH will contain the login-path for the site 2 master, e.g.:
    ```
-   root_10-113-180-221_3306
-   ```
-
-
-8. In site 1, start replication from site 2 using the master and slave login paths, and the replication username/password generated for site 2 (all in the environment already):
-   ```
-   # ./start_replicate.sh --container-name=${CONTAINER_NAME} --master-login-path=${MASTER_LOGIN_PATH} --slave-login-path=${SELF_LOGIN_PATH} --repl-user=${REPL_USERNAME} --repl-password=${REPL_PASSWORD}
+   # kubectl exec \
+       $(kubectl get pods \
+         -l chart=ibmcase-mysql-0.1.0 \
+         -o go-template \
+         --template '{{ (index .items 0).metadata.name }}') -- \
+       /scripts/start_replicate.sh \
+       --master-host=<master IP> \
+       --master-port=<master port> \
+       --repl-user=repl \
+       --repl-password=replPassw0rd
    ```
 
-9. In site 2, start replication from site 1 using the master and slave login paths, and the replication username/password generated for site 1 (all in the environment already)
-   ```
-   # ./start_replicate.sh --container-name=${CONTAINER_NAME} --master-login-path=${MASTER_LOGIN_PATH} --slave-login-path=${SELF_LOGIN_PATH} --repl-user=${REPL_USERNAME} --repl-password=${REPL_PASSWORD}
-   ```
-
-10. Check replication health, e.g.:
-   ```
-   # docker exec -it ${CONTAINER_NAME} mysqlrpladmin --master=${MASTER_LOGIN_PATH} --slave=${SELF_LOGIN_PATH} health
-   # Checking privileges.
-   #
-   # Replication Topology Health:
-   +-----------------+-------+---------+--------+------------+---------+
-   | host            | port  | role    | state  | gtid_mode  | health  |
-   +-----------------+-------+---------+--------+------------+---------+
-   | 10.113.180.221  | 3306  | MASTER  | UP     | ON         | OK      |
-   | 10.121.163.209  | 3306  | SLAVE   | UP     | ON         | OK      |
-   +-----------------+-------+---------+--------+------------+---------+
-   # ...done.
-   ```
-
-11. Load data on one of the sites:
-   ```
-   $ docker exec -it ${CONTAINER_NAME} /root/scripts/load-data.sh
-   ```
-
-
-   On the other site, make sure that the "items" table was loaded correctly:
-   ```
-   $ docker exec -it mysql-master-lon02 mysql --login-path=${SELF_LOGIN_PATH} inventorydb
-
-   mysql> show tables;
-   ```
-
-
-12. Create a database user in one of the sites.  The database user will be replicated, so there is no need to create the user here.  
-    
-    _It is recommended to change the default passwords used here._
-    ```
-    # docker exec -it mysql-master-lon02 mysql --login-path=${SELF_LOGIN_PATH} 
-    
-    mysql> create user 'dbuser'@'%' identified by 'password';
-    mysql> grant all on *.* to 'dbuser'@'%';
-    mysql> flush privileges;
-    ```
-
-#### Start Inventory Microservice on Bluemix
-
-Follow the instructions here:
-https://github.com/ibm-cloud-architecture/refarch-cloudnative-micro-inventory
-
-The MySQL database replica is available through the VPN Service.  When specifying the parameters for the database connection, use the following:
-
-```
--e "spring.datasource.url=jdbc:mysql://<MASTER_IP>:<MASTER_PORT>/inventorydb" -e "spring.datasource.username=<dbuser>" -e "spring.datasource.password=<password>"
-```
+6. Reverse the steps to create a replica user (e.g. on ams03), and start the slave (e.g. on dal10).

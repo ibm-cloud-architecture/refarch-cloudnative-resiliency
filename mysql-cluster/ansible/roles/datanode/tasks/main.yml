@@ -1,4 +1,6 @@
 ---
+<<<<<<< HEAD
+=======
 - name: create my.cnf
   template: src=templates/my.cnf.j2 dest=/etc/my.cnf
 
@@ -9,6 +11,7 @@
 
 
 
+>>>>>>> e073ae8988610414a2798c9ec197ab7abe880c67
 - name: check if ndbd is running already
   shell: ps aux | grep ndbd | grep -v grep
   ignore_errors: yes

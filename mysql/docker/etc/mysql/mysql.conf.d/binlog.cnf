@@ -1,0 +1,15 @@
+[mysqld]
+read_rnd_buffer_size=2M
+binlog-format=MIXED
+log-bin=mysql-bin
+server-id=1
+log-slave-updates=true
+gtid-mode=ON
+enforce-gtid-consistency=ON
+master-info-repository=TABLE
+relay-log-info-repository=TABLE
+sync-master-info=1
+report-host=$serverName
+report-port=3306
+port=3306
+slave-skip-errors=1062

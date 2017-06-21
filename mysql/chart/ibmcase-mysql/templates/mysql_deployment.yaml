@@ -1,0 +1,104 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ibmcase-mysql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: bluecompute
+    tier: data
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: bluecompute
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
+        tier: data
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: {{ .Chart.Name }}-mysql
+          ports:
+            - containerPort: {{ .Values.mysql.service.internalPort }}
+          env:
+            - name: MYSQL_DATABASE
+              value: {{ .Values.mysql.dbname | quote }}
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.binding.name }}
+                  key:  mysql-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.binding.name }}
+                  key:  mysql-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.mysql.binding.name }}
+                  key:  mysql-root-password
+            - name: MYSQL_ALLOW_EMPTY_PASSWORD
+              value: "false"
+            - name: SERVER_ID
+              value: {{ .Values.mysql.server_id | quote }}
+            - name: MAX_SERVER_ID
+              value: {{ .Values.mysql.max_servers | quote }}
+
+          resources:
+{{ toYaml .Values.mysql.resources | indent 14 }}
+          livenessProbe:
+            exec:
+              command:
+              - mysqladmin
+              - ping
+            initialDelaySeconds: 45
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+              - mysqladmin
+              - ping
+            initialDelaySeconds: 15
+            timeoutSeconds: 2
+{{- if .Values.mysql.backup.enabled }}
+        - name: inventory-backup-container
+          image: ibmcase/ibm-backup-restore
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          command: ["/scripts/docker-entrypoint.sh", "/bin/bash", "-c", "/backup_restore/vbackup"]
+          env:
+          - name: BACKUP_NAME
+            value: {{ .Values.mysql.backup.backupName }}
+          - name: BACKUP_DIRECTORY
+            value: /var/lib/mysql
+          - name: RESTORE_DIRECTORY
+            value: /var/lib/mysql
+          - name: SCHEDULE_TYPE
+            value: {{ .Values.mysql.backup.scheduleType }}
+          - name: SCHEDULE_INFO
+            value: {{ .Values.mysql.backup.scheduleInfo }}
+          - name: BACKUP_TYPE
+            value: {{ .Values.mysql.backup.backupType }}
+          - name: OBJECT_STORAGE_CREDENTIALS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.mysql.backup.objStoreSecretName }}
+                key: binding
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: {{ .Chart.Name }}-mysql
+{{ end }}
+      volumes:
+        - name: {{ .Chart.Name }}-mysql
+{{- if .Values.mysql.existingPVCName }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.mysql.existingPVCName }}
+{{ else }}
+          hostPath:
+            path: /var/lib/mysql-{{ .Release.Name }}
+{{ end }}
