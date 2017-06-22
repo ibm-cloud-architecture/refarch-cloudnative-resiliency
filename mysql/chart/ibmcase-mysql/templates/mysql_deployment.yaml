@@ -59,6 +59,7 @@ spec:
               - ping
             initialDelaySeconds: 45
             timeoutSeconds: 5
+            failureThreshold: 12
           readinessProbe:
             exec:
               command:
@@ -66,6 +67,7 @@ spec:
               - ping
             initialDelaySeconds: 15
             timeoutSeconds: 2
+            failureThreshold: 30
 {{- if .Values.mysql.backup.enabled }}
         - name: inventory-backup-container
           image: ibmcase/ibm-backup-restore
