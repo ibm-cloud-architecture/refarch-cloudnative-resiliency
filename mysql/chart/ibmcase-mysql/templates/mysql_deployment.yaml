@@ -56,6 +56,7 @@ spec:
             exec:
               command:
               - mysqladmin
+              - -p${MYSQL_ROOT_PASSWORD}
               - ping
             initialDelaySeconds: 45
             timeoutSeconds: 5
@@ -63,6 +64,7 @@ spec:
             exec:
               command:
               - mysqladmin
+              - -p${MYSQL_ROOT_PASSWORD}
               - ping
             initialDelaySeconds: 15
             timeoutSeconds: 2
@@ -73,7 +75,7 @@ spec:
           command: ["/scripts/docker-entrypoint.sh", "/bin/bash", "-c", "/backup_restore/vbackup"]
           env:
           - name: BACKUP_NAME
-            value: {{ .Values.mysql.backup.backupName }}
+            value: {{ required "A valid value of mysql.backup.backupName is required!" .Values.mysql.backup.backupName }}
           - name: BACKUP_DIRECTORY
             value: /var/lib/mysql
           - name: RESTORE_DIRECTORY
@@ -87,7 +89,7 @@ spec:
           - name: OBJECT_STORAGE_CREDENTIALS
             valueFrom:
               secretKeyRef:
-                name: {{ .Values.mysql.backup.objStoreSecretName }}
+                name: {{ required "A valid value of mysql.backup.objStoreSecretName is required!" .Values.mysql.backup.objStoreSecretName }}
                 key: binding
           volumeMounts:
             - mountPath: /var/lib/mysql

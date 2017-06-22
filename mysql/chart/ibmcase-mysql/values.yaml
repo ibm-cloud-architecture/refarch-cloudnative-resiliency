@@ -22,8 +22,8 @@ mysql:
   existingPVCName: 
   backup:
     enabled: false
-    objStoreSecretName: binding-jkwong-objstorage
-    backupName: patrocinio-inventory-mysql
+    objStoreSecretName: 
+    backupName: 
     backupType: incremental
     scheduleType: periodic
     scheduleInfo: daily
