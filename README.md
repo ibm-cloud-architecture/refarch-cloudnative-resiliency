@@ -64,11 +64,13 @@ The main steps are the following:
   * Start the container in one of the Kubernetes clusters to load-balance between the two clusters
   * Note down the IP address of BlueCompute NGINX Docker container
   * Optionally define a DNS associated to the IP of BlueCompute NGINX (recommended)
+  
+4. __Configure automated backup__ For disaster recovery, ensure that a site can recover using [automated backups](https://github.com/ibm-cloud-architecture/refarch-cloudnative-backup).
 
-4. __Align shared secrets across sites__ When BlueCompute is deployed to two separate Bluemix Public environments, it's important to keep aligned shared secret configurations in both locations, so calls made to OAuth protected REST APIs by clients can be routed seamlessly to one of the two locations by the front-end load-balancer. For login protected pages and OAuth protected APIs, the same HS256 key must be used so that the same token can be used in either deployment.
+5. __Align shared secrets across sites__ When BlueCompute is deployed to two separate Bluemix Public environments, it's important to keep aligned shared secret configurations in both locations, so calls made to OAuth protected REST APIs by clients can be routed seamlessly to one of the two locations by the front-end load-balancer. For login protected pages and OAuth protected APIs, the same HS256 key must be used so that the same token can be used in either deployment.
 
-5. __Configure BlueCompute Web Application and Mobile Application__  to point to the Load Balancer in front of the two deployments of BlueCompute.
+6. __Configure BlueCompute Web Application and Mobile Application__  to point to the Load Balancer in front of the two deployments of BlueCompute.
 
-6. __Test availability of the app__  Test should include the bringing offline individual worker nodes in one location, and an entire cluster.
+7. __Test availability of the app__  Test should include the bringing offline individual worker nodes in one location, and an entire cluster.
 
 At this point, it should be possible to use BlueCompute Mobile App and BlueCompute Web Application even when one of the two sites is unavailable.
