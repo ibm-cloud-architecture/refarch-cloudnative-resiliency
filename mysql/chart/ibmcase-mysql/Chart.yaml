@@ -1,4 +1,4 @@
 apiVersion: v1
 description: resilient MySQL deployment
 name: ibmcase-mysql
-version: 0.1.0
+version: 0.1.1
