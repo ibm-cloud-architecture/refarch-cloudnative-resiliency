@@ -1,34 +1,5 @@
 replicaCount: 1
 
-mysql:
-  server_id: 1
-  max_servers: 4
-  dbname: 
-  user: dbuser
-  password: password
-  rootPassword: admin123
-  service:
-    name: mysqldb
-    type: ClusterIP
-    externalPort: 3306
-    internalPort: 3306
-  binding:
-    name: binding-mysql
-  resources:
-    limits:
-      memory: 128Mi
-    requests:
-      memory: 64Mi
-  labels:
-  existingPVCName: 
-  backup:
-    enabled: false
-    objStoreSecretName: 
-    backupName: 
-    backupType: incremental
-    scheduleType: periodic
-    scheduleInfo: daily
-
 image:
   repository: ibmcase/mysql
   tag: latest
@@ -41,3 +12,38 @@ resources:
   requests:
     cpu: 100m
     memory: 128Mi
+
+server_id: 1
+max_servers: 4
+
+dbname: 
+user: dbuser
+password: password
+rootPassword: admin123
+
+service:
+  name: mysqldb
+  type: ClusterIP
+  externalPort: 3306
+  internalPort: 3306
+
+binding:
+  name: binding-mysql
+
+resources:
+  limits:
+    memory: 128Mi
+  requests:
+    memory: 64Mi
+
+labels:
+
+existingPVCName: 
+
+backup:
+  enabled: false
+  objStoreSecretName: 
+  backupName: 
+  backupType: incremental
+  scheduleType: periodic
+  scheduleInfo: daily

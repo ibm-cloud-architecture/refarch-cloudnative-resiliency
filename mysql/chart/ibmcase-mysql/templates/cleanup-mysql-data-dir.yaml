@@ -31,9 +31,9 @@ spec:
             name: {{ .Chart.Name }}-mysql
       volumes:
         - name: {{ .Chart.Name }}-mysql
-{{- if .Values.mysql.existingPVCName }}
+{{- if .Values.existingPVCName }}
           persistentVolumeClaim:
-            claimName: {{ .Values.mysql.existingPVCName }}
+            claimName: {{ .Values.existingPVCName }}
 {{ else }}
           hostPath:
             path: /var/lib/mysql-{{ .Release.Name }}
