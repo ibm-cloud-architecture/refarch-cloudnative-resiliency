@@ -4,17 +4,17 @@ metadata:
   name: {{ .Release.Name }}-ibmcase-mysql
   namespace: {{ .Release.Namespace }}
   labels:
-    app: bluecompute
-    tier: data
+{{ toYaml .Values.mysql.labels | indent 4 }}
+    release: {{.Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: bluecompute
+{{ toYaml .Values.mysql.labels | indent 8 }}
+        release: {{.Release.Name | quote }}
         chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-        tier: data
     spec:
       containers:
         - name: {{ .Chart.Name }}

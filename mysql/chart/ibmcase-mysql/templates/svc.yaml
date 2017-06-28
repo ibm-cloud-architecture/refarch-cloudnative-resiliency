@@ -4,6 +4,8 @@ metadata:
   name: {{ .Values.mysql.service.name }}
   namespace: {{ .Release.Namespace }}
   labels:
+{{ toYaml .Values.mysql.labels | indent 4 }}
+    release: {{.Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
 spec:
   type: {{ .Values.mysql.service.type }}
@@ -11,4 +13,6 @@ spec:
     - port: {{ .Values.mysql.service.internalPort }}
       targetPort: {{ .Values.mysql.service.externalPort }}
   selector:
+{{ toYaml .Values.mysql.labels | indent 4 }}
+    release: {{.Release.Name | quote }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"

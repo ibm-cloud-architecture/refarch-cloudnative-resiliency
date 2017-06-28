@@ -19,6 +19,7 @@ mysql:
       memory: 128Mi
     requests:
       memory: 64Mi
+  labels:
   existingPVCName: 
   backup:
     enabled: false
