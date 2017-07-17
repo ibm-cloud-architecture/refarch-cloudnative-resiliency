@@ -37,6 +37,7 @@ resources:
     memory: 64Mi
 
 labels:
+  datastore: mysql
 
 existingPVCName: 
 
