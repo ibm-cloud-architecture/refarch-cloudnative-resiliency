@@ -16,7 +16,7 @@ resources:
 server_id: 1
 max_servers: 4
 
-dbname: 
+dbname: inventorydb
 user: dbuser
 password: password
 rootPassword: admin123
@@ -37,6 +37,9 @@ resources:
     memory: 64Mi
 
 labels:
+  app: bluecompute
+  tier: data
+  micro: inventory
 
 existingPVCName: 
 
