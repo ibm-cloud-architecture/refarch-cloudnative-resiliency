@@ -37,9 +37,7 @@ resources:
     memory: 64Mi
 
 labels:
-  app: bluecompute
-  tier: data
-  micro: inventory
+  datastore: mysql
 
 existingPVCName: 
 
