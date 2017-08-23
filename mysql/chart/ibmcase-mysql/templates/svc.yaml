@@ -16,5 +16,3 @@ spec:
       name: mysql
   selector:
 {{ toYaml .Values.labels | indent 4 }}
-    release: {{.Release.Name | quote }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"

@@ -1,0 +1,16 @@
+{{ if .Values.global.persistenceEnabled }}
+  {{ if .Values.existingPVCName }}
+  {{ else }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.dbname }}-data
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  {{ end }}
+{{ end }}

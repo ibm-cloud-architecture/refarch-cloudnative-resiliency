@@ -16,6 +16,9 @@ resources:
 server_id: 1
 max_servers: 4
 
+global:
+  persistenceEnabled: false
+
 dbname: inventorydb
 user: dbuser
 password: password
