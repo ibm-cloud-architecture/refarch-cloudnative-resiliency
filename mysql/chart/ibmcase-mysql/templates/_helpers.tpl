@@ -36,6 +36,6 @@
   {{- else if .Values.global.persistence.volume.storageClass -}}
     {{ .Values.global.persistence.volume.storageClass }}
   {{- else -}}
-    {{- printf "default" -}}
+    {{- printf "" -}}
   {{- end -}}
 {{- end -}}
