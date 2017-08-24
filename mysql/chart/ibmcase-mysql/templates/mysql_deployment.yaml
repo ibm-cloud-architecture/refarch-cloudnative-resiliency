@@ -15,7 +15,7 @@ spec:
 {{ toYaml .Values.labels | indent 8 }}
     spec:
       containers:
-        - name: {{ .Release.Name }}-{{ .Values.dbname }}-mysql
+        - name: mysql
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           volumeMounts:

@@ -17,7 +17,11 @@ server_id: 1
 max_servers: 4
 
 global:
-  persistenceEnabled: false
+  persistence:
+    enabled: false
+    volume:
+      storageClass:
+      size: 
 
 dbname: inventorydb
 user: dbuser
@@ -42,7 +46,13 @@ resources:
 labels:
   datastore: mysql
 
-existingPVCName: 
+persistence:
+  existingName:
+  enabled: false
+  volume:
+    storageClass:
+    size: 
+
 
 backup:
   enabled: false
