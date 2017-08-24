@@ -1,0 +1,35 @@
+{{ if .Values.global.persistence.enabled }}
+  {{ if .Values.persistence.existingName }}
+  {{ else }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ template "volumeStorageClass" . }}
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.dbname }}-data
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ template "volumeSize" . }}
+  {{ end }}
+{{ else if .Values.persistence.enabled }}
+  {{ if .Values.persistence.existingName }}
+  {{ else }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  annotations:
+    volume.beta.kubernetes.io/storage-class: {{ template "volumeStorageClass" . }}
+  name: {{ .Release.Name }}-{{ .Chart.Name }}-{{ .Values.dbname }}-data
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ template "volumeSize" . }}
+  {{ end }}
+{{ end }}

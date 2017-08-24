@@ -13,11 +13,9 @@ spec:
     metadata:
       labels:
 {{ toYaml .Values.labels | indent 8 }}
-        release: {{.Release.Name | quote }}
-        chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
     spec:
       containers:
-        - name: {{ .Release.Name }}-{{ .Values.dbname }}-mysql
+        - name: mysql
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           volumeMounts:
@@ -96,11 +94,4 @@ spec:
               name: {{ .Values.dbname }}-mysql
 {{ end }}
       volumes:
-        - name: {{ .Values.dbname }}-mysql
-{{- if .Values.existingPVCName }}
-          persistentVolumeClaim:
-            claimName: {{ .Values.existingPVCName }}
-{{ else }}
-          hostPath:
-            path: /var/lib/mysql-{{ .Values.dbname }}
-{{ end }}
+        {{ template "mysqlDataVolume" . }}
