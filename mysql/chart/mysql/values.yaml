@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ibmcase/mysql
+  repository: ibmcase/bluecompute-mysql
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -53,11 +53,20 @@ persistence:
     storageClass:
     size: 
 
-
 backup:
+  image:
+    repository: ibmcase/bluecompute-mysql-backup
+    tag: latest
+    pullPolicy: IfNotPresent
   enabled: false
   objStoreSecretName: 
   backupName: 
   backupType: incremental
   scheduleType: periodic
   scheduleInfo: daily
+
+busybox:
+  image:
+    repository: ibmcase/bluecompute-busybox
+    tag: latest
+    pullPolicy: IfNotPresent

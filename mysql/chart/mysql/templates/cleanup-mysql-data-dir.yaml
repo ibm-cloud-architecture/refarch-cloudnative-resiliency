@@ -22,7 +22,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: wipe-data
-        image: busybox:latest
+        image: "{{ template "busyBoxDockerImage" . }}:{{ .Values.busybox.image.tag }}"
         command: [ "/bin/sh", "-c" ]
         args: ["ls -l /var/lib/mysql; rm -rf /var/lib/mysql/*; ls -l /var/lib/mysql"]
         imagePullPolicy: IfNotPresent

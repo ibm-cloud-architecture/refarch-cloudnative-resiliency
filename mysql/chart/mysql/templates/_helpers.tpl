@@ -39,3 +39,34 @@
     {{- printf "" -}}
   {{- end -}}
 {{- end -}}
+
+
+{{- define "dockerImage" -}}
+  {{- if .Values.global.useICPPrivateImages -}}
+    {{/* assume image exists in ICP Private Registry */}}
+    {{- printf "mycluster.icp:8500/default/bluecompute-mysql" -}}
+    {{/*{{- printf "mycluster.icp:8500/%s/bluecompute-mysql" .Release.Namespace - */}}
+  {{- else -}}
+    {{- .Values.image.repository }}
+  {{- end }}
+{{- end -}}
+
+{{- define "busyBoxDockerImage" -}}
+  {{- if .Values.global.useICPPrivateImages -}}
+    {{/* assume image exists in ICP Private Registry */}}
+    {{- printf "mycluster.icp:8500/default/bluecompute-busybox" -}}
+    {{/*- printf "mycluster.icp:8500/%s/bluecompute-busybox" .Release.Namespace - */}}
+  {{- else -}}
+    {{- .Values.busybox.image.repository }}
+  {{- end }}
+{{- end -}}
+
+{{- define "backupDockerImage" -}}
+  {{- if .Values.global.useICPPrivateImages -}}
+    {{/* assume image exists in ICP Private Registry */}}
+    {{- printf "mycluster.icp:8500/default/bluecompute-mysql-backup" -}}
+    {{/*- printf "mycluster.icp:8500/%s/bluecompute-mysql-backup" .Release.Namespace - */}}
+  {{- else -}}
+    {{- .Values.backup.image.repository }}
+  {{- end }}
+{{- end -}}
