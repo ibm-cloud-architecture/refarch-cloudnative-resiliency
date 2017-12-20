@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: "{{ template "dockerImage" . }}:{{ .Values.image.tag }}"
+          image: "{{ template "mySQLDockerImage" . }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           volumeMounts:
             - mountPath: /var/lib/mysql

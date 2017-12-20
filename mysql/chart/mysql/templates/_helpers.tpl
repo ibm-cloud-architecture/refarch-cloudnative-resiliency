@@ -41,7 +41,7 @@
 {{- end -}}
 
 
-{{- define "dockerImage" -}}
+{{- define "mySQLDockerImage" -}}
   {{- if .Values.global.useICPPrivateImages -}}
     {{/* assume image exists in ICP Private Registry */}}
     {{- printf "mycluster.icp:8500/default/bluecompute-mysql" -}}
