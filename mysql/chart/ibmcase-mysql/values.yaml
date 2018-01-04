@@ -21,7 +21,7 @@ global:
     enabled: false
     volume:
       storageClass:
-      size: 
+      size:
 
 dbname: inventorydb
 user: dbuser
@@ -51,7 +51,7 @@ persistence:
   enabled: false
   volume:
     storageClass:
-    size: 
+    size:
 
 backup:
   image:
@@ -59,14 +59,8 @@ backup:
     tag: latest
     pullPolicy: IfNotPresent
   enabled: false
-  objStoreSecretName: 
-  backupName: 
+  objStoreSecretName:
+  backupName:
   backupType: incremental
   scheduleType: periodic
   scheduleInfo: daily
-
-busybox:
-  image:
-    repository: ibmcase/bluecompute-busybox
-    tag: latest
-    pullPolicy: IfNotPresent
