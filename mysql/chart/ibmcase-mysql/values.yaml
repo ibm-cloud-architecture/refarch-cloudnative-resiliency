@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: ibmcase/mysql
+  repository: ibmcase/bluecompute-mysql
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -21,7 +21,7 @@ global:
     enabled: false
     volume:
       storageClass:
-      size: 
+      size:
 
 dbname: inventorydb
 user: dbuser
@@ -51,13 +51,16 @@ persistence:
   enabled: false
   volume:
     storageClass:
-    size: 
-
+    size:
 
 backup:
+  image:
+    repository: ibmcase/bluecompute-mysql-backup
+    tag: latest
+    pullPolicy: IfNotPresent
   enabled: false
-  objStoreSecretName: 
-  backupName: 
+  objStoreSecretName:
+  backupName:
   backupType: incremental
   scheduleType: periodic
   scheduleInfo: daily

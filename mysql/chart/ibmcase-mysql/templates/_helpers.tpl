@@ -39,3 +39,12 @@
     {{- printf "" -}}
   {{- end -}}
 {{- end -}}
+
+
+{{- define "mySQLDockerImage" -}}
+  {{- .Values.image.repository }}
+{{- end -}}
+
+{{- define "backupDockerImage" -}}
+  {{- .Values.backup.image.repository }}
+{{- end -}}

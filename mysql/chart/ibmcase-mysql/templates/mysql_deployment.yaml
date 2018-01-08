@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: mysql
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: "{{ template "mySQLDockerImage" . }}:{{ .Values.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           volumeMounts:
             - mountPath: /var/lib/mysql
@@ -68,7 +68,7 @@ spec:
             failureThreshold: 30
 {{- if .Values.backup.enabled }}
         - name: inventory-backup-container
-          image: ibmcase/ibm-backup-restore
+          image: "{{ template "backupDockerImage" . }}:{{ .Values.backup.image.tag }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           command: ["/scripts/docker-entrypoint.sh", "/bin/bash", "-c", "/backup_restore/vbackup"]
           env:
