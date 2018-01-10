@@ -11,7 +11,7 @@ spec:
   type: {{ .Values.service.type }}
   ports:
   - name: mysql
-    port: {{ .Values.service.port }}
+    port: {{ .Values.service.internalPort }}
     targetPort: mysql
   selector:
     app: {{ template "mysql.fullname" . }}
