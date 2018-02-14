@@ -9,3 +9,23 @@
 {{- define "busyBoxDockerImage" -}}
   {{- .Values.busybox.image.repository }}
 {{- end -}}
+
+{{- define "mysqlVolumeSize" -}}
+  {{- if .Values.persistence.size -}}
+    {{ .Values.persistence.size }}
+  {{- else if .Values.global.persistence.volume.size -}}
+    {{ .Values.global.persistence.volume.size }}
+  {{- else -}}
+    {{- printf "10Gi" -}}
+  {{- end -}}
+{{- end -}}
+
+{{- define "mysqlVolumeStorageClass" -}}
+  {{- if .Values.persistence.storageClass -}}
+    {{ .Values.persistence.storageClass }}
+  {{- else if .Values.global.persistence.volume.storageClass -}}
+    {{ .Values.global.persistence.volume.storageClass }}
+  {{- else -}}
+    {{- printf "" -}}
+  {{- end -}}
+{{- end -}}

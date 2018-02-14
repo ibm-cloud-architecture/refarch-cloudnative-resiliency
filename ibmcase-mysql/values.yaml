@@ -24,8 +24,9 @@ binding:
 persistence:
   enabled: false
   accessMode: ReadWriteOnce
-  size: 8Gi
+  size: 
   storageClass:
+  existingClaim:
 
 resources:
   requests:
