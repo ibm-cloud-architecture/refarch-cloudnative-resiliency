@@ -7,7 +7,7 @@ global:
 
 image:
   repository: ibmcase/bluecompute-mysql
-  tag: test
+  tag: latest
   pullPolicy: IfNotPresent
 
 dbname: inventorydb
