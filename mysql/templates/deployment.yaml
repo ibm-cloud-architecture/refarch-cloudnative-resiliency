@@ -80,10 +80,4 @@ spec:
         - name: data
           mountPath: /var/lib/mysql
       volumes:
-      - name: data
-      {{- if .Values.persistence.enabled }}
-        persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingClaim | default (include "mysql.fullname" .) }}
-      {{- else }}
-        emptyDir: {}
-      {{- end -}}
+        {{ template "mysqlDataVolume" . }}
