@@ -29,3 +29,13 @@
     {{- printf "" -}}
   {{- end -}}
 {{- end -}}
+
+{{- define "mysqlDataVolume" -}}
+        - name: data
+  {{- if (or .Values.persistence.enabled .Values.global.persistence.enabled) }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (include "mysql.fullname" .) }}
+  {{- else }}
+          emptyDir: {}
+  {{- end -}}
+{{- end -}}
